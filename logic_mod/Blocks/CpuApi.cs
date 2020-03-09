@@ -95,6 +95,10 @@ namespace Logic.Blocks
                     new Dictionary<string, CpuApiFunc.ArgInfo>{ { "msg", new CpuApiFunc.ArgInfo("object", "message to print") } },
                     (c) => c.Print
                 ),
+                new CpuApiFunc("typeof", true, "get object type",
+                    new Dictionary<string, CpuApiFunc.ArgInfo>{ { "obj", new CpuApiFunc.ArgInfo("object", "object to get type") } },
+                    (c) => c.Typeof
+                ),
                 new CpuApiFunc("int", true, "convert to integer",
                     new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("object", "value to convert") } },
                     (c) => c.Int
@@ -202,6 +206,17 @@ namespace Logic.Blocks
                                     { "newBase", new CpuApiFunc.ArgInfo("float", "logarifm base") }
                                 },
                                 (c) => c.Log
+                            )
+                        }
+                    }
+                },
+                { "Object", new ApiNamespace
+                    {
+                        Api =  new List<CpuApiFunc>
+                        {
+                            new CpuApiFunc("keys", true, "get array of object keys",
+                                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "obj", new CpuApiFunc.ArgInfo("object", "object to get keys") } },
+                                (c) => c.Keys
                             )
                         }
                     }

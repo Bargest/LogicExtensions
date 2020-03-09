@@ -262,6 +262,8 @@ namespace Logic.Script
                 return i != 0;
             if (v is float f)
                 return f != 0;
+            if (v == Undefined)
+                return false;
             return v != null;
         }
 
@@ -516,6 +518,9 @@ namespace Logic.Script
                 return null;
             if (!(f is FuncCtx func))
                 return Throw(ctx, $"{f} is not a function");
+
+            if (new RuntimeException(null, ctx).StackTrace().Count() > 200)
+                return Throw(ctx, $"Stack overflow exception while calling {f}");
 
             var funcVarCtx = new VarCtx(ctx, func.ParentScope, func.FunctionProto.Body);
             if (func.FunctionProto.Body != null)

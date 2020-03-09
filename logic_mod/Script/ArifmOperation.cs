@@ -76,7 +76,7 @@ namespace Logic.Script
                 }
             };
             if (maxType == null)
-                throw new Exception("Can't cast type");
+                throw new Exception("Can't cast type for " + aType);
             if (maxType.IsInterface)
                 return Ops[maxType](a, null);
 
@@ -275,7 +275,9 @@ namespace Logic.Script
             Ops = new Dictionary<Type, Func<object, object, object>>
             {
                 { typeof(DumbNullType), (a,b) => (long)1 },
-                { typeof(long), ApplyInt }
+                { typeof(Block.UndefinedType), (a,b) => (long)1 },
+                { typeof(long), ApplyInt },
+                { typeof(object), (a,b)=> a == null ? (long)1 : 0 }
             };
         }
         public object ApplyInt(object aa, object bb) { return (long)aa == 0 ? (long)1 : 0; }

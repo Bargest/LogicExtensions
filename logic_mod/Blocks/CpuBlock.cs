@@ -320,6 +320,22 @@ namespace Logic.Blocks
             }
             return null;
         }
+
+        public object Typeof(VarCtx ctx, object[] x)
+        {
+            if (x.Length == 0)
+                return null;
+            if (x[0] is FuncCtx)
+                return "function";
+            if (x[0] is long)
+                return "int";
+            if (x[0] is float)
+                return "float";
+            if (x[0] == Block.Undefined)
+                return "undefined";
+            return "object";
+        }
+
         public object Int(VarCtx ctx, object[] x)
         {
             if (x.Length < 1 || !TryGetLong(x[0], out long v))
@@ -356,6 +372,25 @@ namespace Logic.Blocks
                 throw new Exception("Invalid value");
             return (float)Math.Log(v, newBase);
         }
+
+        public object Keys(VarCtx ctx, object[] x)
+        {
+            if (x.Length < 1)
+                throw new Exception("Invalid object");
+            if (x[0] is object[] objArr)
+            {
+                var arr = new object[objArr.Length];
+                for (long i = 0; i < arr.Length; ++i)
+                    arr[i] = i;
+                return arr;
+            }
+            if (x[0] is Dictionary<string, object> dict)
+            {
+                return dict.Keys.Select(y => (object)y).ToArray();
+            }
+            return new object[0];
+        }
+
         public object Abs(VarCtx ctx, object[] x)
         {
             if (x.Length < 1 || !TryGetFloat(x[0], out float v))
