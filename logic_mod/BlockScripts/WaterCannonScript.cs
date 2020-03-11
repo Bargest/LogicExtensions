@@ -54,8 +54,10 @@ namespace Logic.BlockScripts
             {
                 if (!Mathf.Approximately(waterCannonController.StrengthSlider.Value, 0))
                 {
-                    waterCannonController.prevActiveState = false;
-                    waterCannonController.prevBoilingState = false;
+                    if (waterCannonController.isActive)
+                        waterCannonController.prevActiveState = false;
+                    if (waterCannonController.boiling)
+                        waterCannonController.prevBoilingState = false;
                 }
                 valueChanged = false;
                 lastParticleChange = Time.time;

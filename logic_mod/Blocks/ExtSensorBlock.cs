@@ -134,6 +134,11 @@ namespace Logic.Blocks
 
         void CheckPoint(Collider coll, Vector3 point)
         {
+            // we sacrifice the real (0;0;0) point because it's probability is near zero
+            // but all FA points go to this coordinate
+            if (point == Vector3.zero)
+                return;
+
             var closeDist = Vector3.Distance(sensorPos.position, point);
             if (closeDist < closestDistance)
             {
