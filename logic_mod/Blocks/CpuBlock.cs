@@ -495,8 +495,13 @@ namespace Logic.Blocks
                 return 0;
             if (!TryGetFloat(x[1], out float outv))
                 return 0;
-            //Debug.Log($"set outv {outv}: emu was {PIO[(int)pio].Emulating}");
+            
             outv = Mathf.Clamp01(outv);
+            if (float.IsNaN(outv))
+            {
+                Print(ctx, new object[] { "Warning: output NaN to " + pio + " failed" });
+                return 0;
+            }   
             PIO[(int)pio].SetOutValue(BlockBehaviour, outv);
             return 1;
         }
