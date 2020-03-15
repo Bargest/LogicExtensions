@@ -251,25 +251,11 @@ namespace Logic.Blocks
 
         bool TryGetFloat(object arg, out float value)
         {
-            value = 0;
-            if (arg is float flev)
-                value = flev;
-            else if (arg is long ilev)
-                value = ilev;
-            else if (arg is string str)
-                return float.TryParse(str, out value);
-            return true;
+            return Block.TryGetFloat(arg, out value);
         }
         bool TryGetLong(object arg, out long value)
         {
-            value = 0;
-            if (arg is float flev)
-                value = (long)flev;
-            else if (arg is long ilev)
-                value = ilev;
-            else if (arg is string str)
-                return long.TryParse(str, out value);
-            return true;
+            return Block.TryGetLong(arg, out value);
         }
 
         int printCount;
@@ -282,7 +268,7 @@ namespace Logic.Blocks
 
         public object Print(VarCtx ctx, object[] x)
         {
-            if (x.Length == 0 || x[0] == null)
+            if (x.Length == 0)
                 return null;
 
             if (Time.time - lastPrint < 1)
@@ -303,7 +289,7 @@ namespace Logic.Blocks
                 lastPrint = Time.time;
             }
             ++printCount;
-            var logLine = x[0].ToString();
+            var logLine = x[0]?.ToString() ?? "null";
             var blockPlayer = BlockBehaviour.ParentMachine == null ? null : Player.From(BlockBehaviour.ParentMachine.PlayerID);
             if (blockPlayer == null || blockPlayer.IsHost)
             {

@@ -50,8 +50,8 @@ namespace Logic.Script
                 case ExprType.NewArray:
                     var arrNode = e as ArrayNode;
                     if (arrNode.Length != null)
-                        return new BuiltExpression(cb.ENewArray(Compile(cb, arrNode.Length)?.Expr), e);
-                    return new BuiltExpression(Block.EArrayInit(CompileList(cb, arrNode.Content).Select(x => x.Expr)), e);
+                        return new BuiltExpression(cb.ENewList(Compile(cb, arrNode.Length)?.Expr), e);
+                    return new BuiltExpression(Block.EListInit(CompileList(cb, arrNode.Content).Select(x => x.Expr)), e);
                 case ExprType.DictGet:
                     var eDictGet = e as DictGetNode;
                     return new BuiltExpression(cb.EReadDict(Compile(cb, eDictGet.Left)?.Expr, Compile(cb, eDictGet.Right)?.Expr), e);

@@ -145,17 +145,96 @@ namespace Logic.Script
                 if (dkey != null)
                     return d[dkey] = value;
             }
-            else if (dict is object[] arr)
+            else if (dict is List<object> arr)
             {
                 var akey = GetArrayKey(key);
                 if (akey >= 0)
                 {
-                    if (akey < arr.Length)
+                    if (akey < arr.Count)
                         return arr[akey] = value;
                     return Undefined;
                 }
             }
             return Throw(ctx, $"Can't write to {dict}[{key}]");
+        }
+
+        public static bool TryGetFloat(object arg, out float value)
+        {
+            value = 0;
+            if (arg is float flev)
+            {
+                value = flev;
+                return true;
+            }
+            else if (arg is long ilev)
+            {
+                value = ilev;
+                return true;
+            }
+            else if (arg is string str)
+                return float.TryParse(str, out value);
+            return false;
+        }
+        public static bool TryGetLong(object arg, out long value)
+        {
+            value = 0;
+            if (arg is float flev)
+            {
+                value = (long)flev;
+                return true;
+            }
+            else if (arg is long ilev)
+            {
+                value = ilev;
+                return true;
+            }
+            else if (arg is string str)
+                return long.TryParse(str, out value);
+            return false;
+        }
+
+        public static object Push(VarCtx c, List<object> arr, object[] varr)
+        {
+            arr.AddRange(varr);
+            return arr.Count;
+        }
+
+        public static object Slice(VarCtx c, List<object> arr, object[] varr)
+        {
+            if (varr.Length < 1 || !TryGetLong(varr[0], out long start))
+                start = 0;
+            if (varr.Length < 2 || !TryGetLong(varr[1], out long end))
+                end = arr.Count;
+            if (start < 0)
+                start = arr.Count + start;
+            if (end < 0)
+                end = arr.Count + end;
+            if (end < start)
+                return new List<object>();
+            return arr.Skip((int)start).Take((int)(end - start)).ToList();
+        }
+
+        public static object Splice(VarCtx c, List<object> arr, object[] varr)
+        {
+            if (varr.Length < 1 || !TryGetLong(varr[0], out long lstart))
+                lstart = 0;
+            var start = (int)((lstart < 0) ? arr.Count + lstart : lstart);
+            if (start > arr.Count)
+                start = arr.Count;
+
+            if (varr.Length < 2 || !TryGetLong(varr[1], out long deleteCount) || deleteCount > arr.Count - start)
+                deleteCount = arr.Count - start;
+
+            var deleted = new List<object>();
+            while (deleteCount > 0)
+            {
+                --deleteCount;
+                deleted.Add(arr[start]);
+                arr.RemoveAt(start);
+            }
+            for (int k = 2; k < varr.Length; ++k)
+                arr.Insert(start + k - 2, varr[k]);
+            return deleted;
         }
 
         public static object GetDictVal(VarCtx ctx, object dict, object key)
@@ -167,15 +246,36 @@ namespace Logic.Script
                     return Undefined;
                 return d[dkey];
             }
-            else if (dict is object[] arr)
+            else if (dict is List<object> arr)
             {
-                if (key is string sk && sk == "length")
-                    return (long)arr.Length;
+                if (key is string sk)
+                {
+                    if (sk == "length")
+                        return (long)arr.Count;
+                    if (sk == "push")
+                        return DeclareFunc(ctx, new Function
+                        {
+                            Name = "push",
+                            Native = (c, varr) => Push(c, arr, varr)
+                        });
+                    if (sk == "slice")
+                        return DeclareFunc(ctx, new Function
+                        {
+                            Name = "slice",
+                            Native = (c, varr) => Slice(c, arr, varr)
+                        });
+                    if (sk == "splice")
+                        return DeclareFunc(ctx, new Function
+                        {
+                            Name = "splice",
+                            Native = (c, varr) => Splice(c, arr, varr)
+                        });
+                }
 
                 var akey = GetArrayKey(key);
                 if (akey >= 0)
                 {
-                    if (akey < arr.Length)
+                    if (akey < arr.Count)
                         return arr[akey];
                     return Undefined;
                 }
@@ -230,11 +330,11 @@ namespace Logic.Script
             return funcCtx;
         }
 
-        public static object NewArray(VarCtx curCtx, object length)
+        public static object NewList(VarCtx curCtx, object length)
         {
             var len = GetArrayKey(length);
             if (len >= 0)
-                return new object[len];
+                return new object[len].ToList();
             return Throw(curCtx, "Invalid array length " + length);
         }
 
@@ -349,14 +449,19 @@ namespace Logic.Script
             return Expression.Invoke(Const((Func<string[], object[], object>)InitDict), Const(init.Keys.ToArray()), EArrayInit(init.Values));
         }
 
-        public Expression ENewArray(Expression size)
+        public Expression ENewList(Expression size)
         {
-            return Expression.Invoke(Const((Func<VarCtx, object, object>)NewArray), RuntimeVarCtx, Expression.Convert(size, typeof(object)));
+            return Expression.Invoke(Const((Func<VarCtx, object, object>)NewList), RuntimeVarCtx, Expression.Convert(size, typeof(object)));
         }
 
         public static Expression EArrayInit(IEnumerable<Expression> vals)
         {
             return Expression.NewArrayInit(typeof(object), vals.Select(x => Expression.Convert(x, typeof(object))).ToArray());
+        }
+
+        public static Expression EListInit(IEnumerable<Expression> vals)
+        {
+            return Expression.Invoke(Const((Func<object, List<object>>)(x => (x as IEnumerable<object>).ToList())), EArrayInit(vals));
         }
 
         public Expression Break()
