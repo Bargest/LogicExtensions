@@ -78,7 +78,7 @@ namespace Logic.Blocks
         public override MKey AddKey(MKey key)
         {
             key = base.AddKey(ExtendKey(key, key.GetKey(0)));
-            var keyIdx = MapperTypes.IndexOf(key);
+            //var keyIdx = MapperTypes.IndexOf(key);
             return key;
         }
 
@@ -95,11 +95,92 @@ namespace Logic.Blocks
         }
 
         public bool aToggleState, bToggleState;
+        float ledActive;
 
+        protected void ToggleLED(float active)
+        {
+            if (ledActive != active)
+            {
+                MeshRenderer.material.SetColor("_EmissCol", Color.Lerp(Color.black, ledColor, active));
+                ledActive = active;
+            }
+        }
         public void SetEmulation(float v)
         {
-            MeshRenderer.material.SetColor("_EmissCol", v > 0 ? ledColor : Color.black);
+            ToggleLED(v);
             MEmulateKey.SetOutValue(this, v);//StartEmulation/StopEmulation;
+        }
+
+        public override void OnRemoteEmulate(MKey key, bool emulate)
+        {
+            if (!emulate)
+                ToggleLED(0);
+            else
+                ToggleLED(1);
+        }
+
+        bool A, B, aToggled, bToggled, emuAPressed, emuBPressed, emuAHeld, emuBHeld, aHeld, bHeld, aPressed, bPressed;
+        private void UpdateState(bool pressedA, bool pressedB, bool heldA, bool heldB)
+        {
+            A = heldA;
+            B = heldB;
+            if (ToggledInput.IsActive)
+            {
+                if (pressedA)
+                {
+                    aToggled = !aToggled;
+                }
+                if (pressedB)
+                {
+                    bToggled = !bToggled;
+                }
+                A = aToggled;
+                B = bToggled;
+            }
+        }
+
+        public override void EmulationUpdateBlock()
+        {
+            emuAPressed = aKey.EmulationPressed();
+            emuBPressed = bKey.EmulationPressed();
+            emuAHeld = aKey.EmulationHeld(includePressed: true);
+            emuBHeld = bKey.EmulationHeld(includePressed: true);
+            UpdateState(emuAPressed, emuBPressed, emuAHeld || aHeld, emuBHeld || bHeld);
+        }
+
+        public override void SendEmulationUpdateBlock()
+        {
+            // placeholder to remove parent call
+        }
+
+        public override void FixedUpdateBlock()
+        {
+            bool result = false;
+            switch (gateType)
+            {
+                case GateType.NOT:
+                    result = (!A);
+                    break;
+                case GateType.AND:
+                    result = (A && B);
+                    break;
+                case GateType.OR:
+                    result = (A || B);
+                    break;
+                case GateType.NAND:
+                    result = (!A || !B);
+                    break;
+                case GateType.NOR:
+                    result = (!A && !B);
+                    break;
+                case GateType.XOR:
+                    result = (A != B);
+                    break;
+                case GateType.XNOR:
+                    result = (A == B);
+                    break;
+            }
+            SetEmulation(result ? 1 : 0);
         }
 
         public override void UpdateBlock()
@@ -108,51 +189,20 @@ namespace Logic.Blocks
             if (Time.timeScale == 0f)
                 return;
 
-            bool isHeld = MAKey.Holding();
-            bool isHeld2 = MBKey.Holding();
-            if (ToggledInput.IsActive)
-            {
-                if (MAKey.Pressed())
-                    aToggleState = !aToggleState;
-                if (MBKey.Pressed())
-                    bToggleState = !bToggleState;
-                isHeld = aToggleState;
-                isHeld2 = bToggleState;
-            }
-            if (isHeld)
+            aPressed = aKey.IsPressed;
+            bPressed = bKey.IsPressed;
+            aHeld = aKey.IsHeld;
+            bHeld = bKey.IsHeld;
+            UpdateState(aPressed, bPressed, aHeld || emuAHeld, bHeld || emuBHeld);
+            if (A)
                 leaverA.localRotation = Quaternion.Euler(0f, 0f, -90f);
             else
                 leaverA.localRotation = Quaternion.Euler(0f, 0f, 0f);
-            if ((gateType != 0 && isHeld2) || (gateType == GateType.NOT && isHeld))
+            if ((gateType != 0 && B) || (gateType == GateType.NOT && A))
                 leaverB.localRotation = Quaternion.Euler(0f, 0f, -90f);
             else
                 leaverB.localRotation = Quaternion.Euler(0f, 0f, 0f);
-            bool result = false;
-            switch (gateType)
-            {
-                case GateType.NOT:
-                    result = (!isHeld);
-                    break;
-                case GateType.AND:
-                    result = (isHeld && isHeld2);
-                    break;
-                case GateType.OR:
-                    result = (isHeld || isHeld2);
-                    break;
-                case GateType.NAND:
-                    result = (!isHeld || !isHeld2);
-                    break;
-                case GateType.NOR:
-                    result = (!isHeld && !isHeld2);
-                    break;
-                case GateType.XOR:
-                    result = (isHeld != isHeld2);
-                    break;
-                case GateType.XNOR:
-                    result = (isHeld == isHeld2);
-                    break;
-            }
-            SetEmulation(result ? 1 : 0);
+            
         }
 
         protected override void OnDisable()

@@ -97,32 +97,69 @@ namespace Logic.Blocks
         }
 
         bool isDetecting, toggle;
+        bool activatePressed, emuActivatePressed, activateHeld, emuActivateHeld;
         bool detectedOnceForThisFrame;
+        float ledActive;
+        Vector3 lastPosition, smoothVel1, smoothVel2, velocity;
+
+        public float ESqrSpeed => (!noRigidbody) ? Rigidbody.velocity.sqrMagnitude : velocity.sqrMagnitude;
+
+        private void UpdateIsDetectingState(bool pressed, bool held)
+        {
+            if (!nonAuto.IsActive)
+            {
+                isDetecting = true;
+                return;
+            }
+            if (holdToDetect.IsActive)
+            {
+                isDetecting = held;
+                return;
+            }
+            if (pressed)
+            {
+                toggle = !toggle;
+            }
+            isDetecting = toggle;
+        }
+
+        public override void EmulationUpdateBlock()
+        {
+            emuActivatePressed = activateKey.EmulationPressed();
+            emuActivateHeld = activateKey.EmulationHeld(includePressed: true);
+            UpdateIsDetectingState(emuActivatePressed, emuActivateHeld || activateHeld);
+        }
 
         public override void UpdateBlock()
         {
-            if (!SimPhysics || Time.timeScale == 0f)
+            if (!isSimulating)
+            {
+                isDetecting = false;
+                return;
+            }
+            if (Time.timeScale == 0f)
             {
                 detectedOnceForThisFrame = true;
                 return;
             }
-            if (!nonAuto.IsActive)
-                isDetecting = true;
-            else if (holdToDetect.IsActive)
-                isDetecting = MActivateKey.Holding();
-            else
+            activatePressed = activateKey.IsPressed;
+            activateHeld = activateKey.IsHeld;
+            UpdateIsDetectingState(activatePressed, activateHeld || emuActivateHeld);
+            if (noRigidbody)
             {
-                if (MActivateKey.Pressed())
-                    toggle = !toggle;
-                isDetecting = toggle;
+                Vector3 position = VisualController.MeshFilter.transform.position;
+                Vector3 a = (position - lastPosition) / Time.deltaTime;
+                velocity = a * 0.333333343f + smoothVel1 * 0.333333343f + smoothVel2 * 0.333333343f;
+                smoothVel2 = smoothVel1;
+                smoothVel1 = velocity;
+                lastPosition = position;
             }
-
-            float targetSpeed, curSpeed = SqrSpeed;
+            float targetSpeed, curSpeed = ESqrSpeed;
             if (maxSpeedSlider.Value <= speedSlider.Value)
                 targetSpeed = speedSlider.Value;
             else
             {
-                curSpeed = (float)(Math.Sqrt(SqrSpeed) - speedSlider.Value);
+                curSpeed = (float)(Math.Sqrt(ESqrSpeed) - speedSlider.Value);
                 curSpeed = curSpeed < 0 ? 0 : curSpeed * curSpeed * 2;
                 targetSpeed = maxSpeedSlider.Value - speedSlider.Value;
             }
@@ -131,25 +168,51 @@ namespace Logic.Blocks
             detectedOnceForThisFrame = false;
         }
 
+        protected void ToggleLED(float active)
+        {
+            if (ledActive != active)
+            {
+                MeshRenderer.material.SetColor("_EmissCol", Color.Lerp(Color.black, ledColor, active));
+                ledActive = active;
+            }
+        }
         public void SetEmulation(float v)
         {
-            MeshRenderer.material.SetColor("_EmissCol", Color.Lerp(Color.black, ledColor, v));
+            ToggleLED(v);
             MEmulateKey.SetOutValue(this, v);//StartEmulation/StopEmulation;
+        }
+        
+        public override void OnRemoteEmulate(MKey key, bool emulate)
+        {
+            if (!emulate)
+                ToggleLED(0);
+            else
+                ToggleLED(1);
+        }
+        public override void SendEmulationUpdateBlock()
+        {
+            // placeholder to remove parent call
         }
 
         public override void FixedUpdateBlock()
         {
-            if (detectedOnceForThisFrame)
+            if (!SimPhysics || !_parentMachine.isReady || detectedOnceForThisFrame)
+            {
                 return;
-
+            }
+            if (!isDetecting)
+            {
+                StopEmulation();
+                return;
+            }
             float outValue = 0;
             if (!isDetecting)
                 outValue = 0;
             else if (maxSpeedSlider.Value <= speedSlider.Value)
-                outValue = ((!inverted.IsActive) ? (SqrSpeed > speedSlider.Value * speedSlider.Value) : (SqrSpeed < speedSlider.Value * speedSlider.Value)) ? 1 : 0;
+                outValue = ((!inverted.IsActive) ? (ESqrSpeed > speedSlider.Value * speedSlider.Value) : (ESqrSpeed < speedSlider.Value * speedSlider.Value)) ? 1 : 0;
             else
             {
-                var curSpeed = (float)(Math.Sqrt(SqrSpeed) - speedSlider.Value);
+                var curSpeed = (float)(Math.Sqrt(ESqrSpeed) - speedSlider.Value);
                 var heightDiff = Mathf.Clamp01(curSpeed / (maxSpeedSlider.Value - speedSlider.Value));
                 outValue = (!inverted.IsActive) ? heightDiff : 1.0f - heightDiff;
             }

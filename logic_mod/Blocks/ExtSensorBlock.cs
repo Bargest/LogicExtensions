@@ -105,13 +105,34 @@ namespace Logic.Blocks
 
         bool NeedCollider(Collider collider)
         {
+            BlockBehaviour componentInParent = collider.transform.GetComponentInParent<BlockBehaviour>();
+            if (collider.transform.GetComponentInParent<BlockBehaviour>() == this)
+                return false;
+            
+            if (ignoreStatic.IsActive)
+            {
+                Rigidbody attachedRigidbody = collider.attachedRigidbody;
+                if (!attachedRigidbody || attachedRigidbody.isKinematic)
+                    return false;
+            }
+            if (collider.isTrigger)
+            {
+                if (collider.transform.root != SingleInstanceFindOnly<AddPiece>.Instance.PhysicsGoalObject.root && collider.transform.root != ReferenceMaster.physicsGoalInstance)
+                    return false;
+                if (StatMaster.isMP)
+                {
+                    if ((bool)collider.gameObject.GetComponent<InsigniaTriggerObject>())
+                        return false;
+                }
+                else if ((bool)collider.gameObject.GetComponentInParent<FinishLine>())
+                    return false;
+            }
             Transform transform = collider.transform;
             if (!_parentMachine.finishedPhysics)
             {
-                BlockBehaviour componentInParent = transform.GetComponentInParent<BlockBehaviour>();
                 if (componentInParent != null)
                 {
-                    if (!(componentInParent != this))
+                    if (componentInParent == this || (ignoreStatic.IsActive && componentInParent.Rigidbody.isKinematic))
                         return false;
                     for (int j = 0; j < componentInParent.DestroyOnSimulate.Length; j++)
                     {
@@ -125,8 +146,10 @@ namespace Logic.Blocks
                     return true;
                 }
             }
-            else if (transform != base.transform)
+            else 
             {
+                if (transform == base.transform)
+                    return false;
                 return true;
             }
             return false;
@@ -226,8 +249,6 @@ namespace Logic.Blocks
                 }
             }
             overlapCount = foundColliders.Count;
-
-            
         }
 
         public Dictionary<string, object> GetTargetObject()
@@ -274,6 +295,15 @@ namespace Logic.Blocks
             return detectedObjectInfo;
         }
 
+        float ledActive;
+
+        bool activatePressed, emuActivatePressed, activateHeld, emuActivateHeld;
+        public override void EmulationUpdateBlock()
+        {
+            emuActivatePressed = activateKey.EmulationPressed();
+            emuActivateHeld = activateKey.EmulationHeld(includePressed: true);
+            UpdateIsDetectingState(emuActivatePressed, emuActivateHeld || activateHeld);
+        }
         public override void UpdateBlock()
         {
             if (!isSimulating)
@@ -290,28 +320,56 @@ namespace Logic.Blocks
                 detectedOnceForThisFrame = true;
                 return;
             }
-            if (!nonAuto.IsActive)
-                isDetecting = true;
-            else if (holdToDetect.IsActive)
-                isDetecting = MActivateKey.Holding();
-            else
-            {
-                if (MActivateKey.Pressed())
-                    toggle = !toggle;
-                isDetecting = toggle;
-            }
+            activatePressed = activateKey.IsPressed;
+            activateHeld = activateKey.IsHeld;
+            UpdateIsDetectingState(activatePressed, activateHeld || emuActivateHeld);
             detectedOnceForThisFrame = false;
         }
 
+        private void UpdateIsDetectingState(bool pressed, bool held)
+        {
+            if (!nonAuto.IsActive)
+            {
+                isDetecting = true;
+                return;
+            }
+            if (holdToDetect.IsActive)
+            {
+                isDetecting = held;
+                return;
+            }
+            if (pressed)
+            {
+                toggle = !toggle;
+            }
+            isDetecting = toggle;
+        }
+
+        protected void ToggleLED(float active)
+        {
+            if (ledActive != active)
+            {
+                MeshRenderer.material.SetColor("_EmissCol", Color.Lerp(Color.black, ledColor, active));
+                ledActive = active;
+            }
+        }
         public void SetEmulation(float v)
         {
-            MeshRenderer.material.SetColor("_EmissCol", Color.Lerp(Color.black, ledColor, v));
+            ToggleLED(v);
             MEmulateKey.SetOutValue(this, v);//StartEmulation/StopEmulation;
+        }
+
+        public override void OnRemoteEmulate(MKey key, bool emulate)
+        {
+            if (!emulate)
+                ToggleLED(0);
+            else
+                ToggleLED(1);
         }
 
         public override void FixedUpdateBlock()
         {
-            if (detectedOnceForThisFrame)
+            if (!_parentMachine.isReady || detectedOnceForThisFrame)
                 return;
 
             float outValue = 0;
@@ -327,7 +385,14 @@ namespace Logic.Blocks
             }
             SetEmulation(outValue);
             detectedOnceForThisFrame = true;
+
         }
+
+        public override void SendEmulationUpdateBlock()
+        {
+            // placeholder to remove parent call
+        }
+
         protected override void OnDisable()
         {
             base.OnDisable();

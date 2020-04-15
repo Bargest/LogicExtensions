@@ -135,6 +135,14 @@ namespace Logic.Blocks
             return (!(a < 0f)) ? a : (a + 360f);
         }
 
+        bool activatePressed, emuActivatePressed, activateHeld, emuActivateHeld;
+        float ledActive;
+        public override void EmulationUpdateBlock()
+        {
+            emuActivatePressed = activateKey.EmulationPressed();
+            emuActivateHeld = activateKey.EmulationHeld(includePressed: true);
+            UpdateIsDetectingState(emuActivatePressed, emuActivateHeld || activateHeld);
+        }
         public override void UpdateBlock()
         {
             if (!isSimulating)
@@ -149,25 +157,50 @@ namespace Logic.Blocks
                 detectedOnceForThisFrame = true;
                 return;
             }
-            if (!nonAuto.IsActive)
-                isDetecting = true;
-            else if (holdToDetect.IsActive)
-                isDetecting = MActivateKey.Holding();
-            else
-            {
-                if (MActivateKey.Pressed())
-                    toggle = !toggle;
-                isDetecting = toggle;
-            }
-
+            activatePressed = activateKey.IsPressed;
+            activateHeld = activateKey.IsHeld;
+            UpdateIsDetectingState(activatePressed, activateHeld || emuActivateHeld);
             AnimateHand(targetDir, isDetecting);
             detectedOnceForThisFrame = false;
         }
-
+        private void UpdateIsDetectingState(bool pressed, bool held)
+        {
+            if (!nonAuto.IsActive)
+            {
+                isDetecting = true;
+                return;
+            }
+            if (holdToDetect.IsActive)
+            {
+                isDetecting = held;
+                return;
+            }
+            if (pressed)
+            {
+                toggle = !toggle;
+            }
+            isDetecting = toggle;
+        }
+        protected void ToggleLED(float active)
+        {
+            if (ledActive != active)
+            {
+                MeshRenderer.material.SetColor("_EmissCol", Color.Lerp(Color.black, ledColor, active));
+                ledActive = active;
+            }
+        }
         public void SetEmulation(float v)
         {
-            MeshRenderer.material.SetColor("_EmissCol", Color.Lerp(Color.black, ledColor, v));
+            ToggleLED(v);
             MEmulateKey.SetOutValue(this, v);//StartEmulation/StopEmulation;
+        }
+
+        public override void OnRemoteEmulate(MKey key, bool emulate)
+        {
+            if (!emulate)
+                ToggleLED(0);
+            else
+                ToggleLED(1);
         }
 
         public bool IsBetween(float start, float end, float mid)
@@ -185,10 +218,14 @@ namespace Logic.Blocks
             mid = ClampAngle(mid);
             return mid < end;
         }
+        public override void SendEmulationUpdateBlock()
+        {
+            // placeholder to remove parent call
+        }
 
         public override void FixedUpdateBlock()
         {
-            if (detectedOnceForThisFrame)
+            if (!SimPhysics || !_parentMachine.isReady || detectedOnceForThisFrame)
                 return;
 
             float outValue = 0;

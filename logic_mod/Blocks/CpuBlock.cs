@@ -48,6 +48,7 @@ namespace Logic.Blocks
             }
         }
 
+        public override bool EmulatesAnyKeys => true;
         const int MaxGas = 500;
         MachineHandler machineHandler;
         public Logic ModContext;
@@ -372,7 +373,7 @@ namespace Logic.Blocks
             }
             if (x[0] is Dictionary<string, object> dict)
             {
-                return dict.Keys.Select(y => (object)y).ToArray();
+                return dict.Keys.Select(y => (object)y).ToList();
             }
             return new object[0];
         }

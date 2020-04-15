@@ -264,7 +264,7 @@ namespace Logic.Blocks
 
         public void SetOutValue(BlockBehaviour b, float v)
         {
-            if (Mathf.Approximately(OutValue, v))
+            if (OutValue == v || v != 0 && Mathf.Approximately(OutValue, v))
                 return;
 
             OutValue = v;
@@ -272,7 +272,6 @@ namespace Logic.Blocks
             if (needEmulate != IAmEmulating)
             {
                 IAmEmulating = needEmulate;
-                //Debug.Log($"{b.KeyList.IndexOf(this)}");
                 InputController.Emulate(b, new MKey[0], this, needEmulate);
             }
         }

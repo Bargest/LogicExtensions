@@ -85,39 +85,11 @@ namespace Logic
             return (CpuBlocks.ContainsKey(b) ? CpuBlocks[b] : null);
         }
 
-
-        bool detectedGameArchChange = false;
-        public int CrutchToGetEmulatorsCount(MKey key)
-        {
-            if (detectedGameArchChange)
-                return key.Emulating ? 1 : 0; // It's totally invalid, but we need this fallback for future
-
-            int count = 0;
-            while (key.Emulating)
-            {
-                ++count;
-                key.UpdateEmulation(false);
-                if (count > 2000)
-                {
-                    // more than 2000 blocks are emulating the same key, it's strange
-                    // so we disable this logic until restart to prevent hanging
-                    detectedGameArchChange = true;
-                    break;
-                }
-            }
-            for (int i = 0; i < count; ++i)
-                key.UpdateEmulation(true);
-            return count;
-        }
-
         private bool LegacyEmu(uint code)
         {
             bool legacyEmu = false;
             if (AllKeys.ContainsKey(code))
-            {
-                var newEmuCount = AllKeys[code].Where(x => (x is MExtKey)).Where(x => (x as MExtKey).IAmEmulating).Count();
-                legacyEmu = AllKeys[code].Where(x => !(x is MExtKey) && x.isEmulator).Any(x => CrutchToGetEmulatorsCount(x) > newEmuCount);
-            }
+                legacyEmu = AllKeys[code].Where(x => !(x is MExtKey) && x.isEmulator).Any(x => x.EmulationHeld(true));
             return legacyEmu;
         }
 
