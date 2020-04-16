@@ -119,7 +119,7 @@ namespace Logic.Blocks
                 ToggleLED(1);
         }
 
-        bool A, B, aToggled, bToggled, emuAPressed, emuBPressed, emuAHeld, emuBHeld, aHeld, bHeld, aPressed, bPressed;
+        bool A, B, aToggled, bToggled, aHeld, bHeld, aPressed, bPressed;//, emuAPressed, emuBPressed, emuAHeld, emuBHeld
         private void UpdateState(bool pressedA, bool pressedB, bool heldA, bool heldB)
         {
             A = heldA;
@@ -141,11 +141,11 @@ namespace Logic.Blocks
 
         public override void EmulationUpdateBlock()
         {
-            emuAPressed = aKey.EmulationPressed();
+            /*emuAPressed = aKey.EmulationPressed();
             emuBPressed = bKey.EmulationPressed();
             emuAHeld = aKey.EmulationHeld(includePressed: true);
             emuBHeld = bKey.EmulationHeld(includePressed: true);
-            UpdateState(emuAPressed, emuBPressed, emuAHeld || aHeld, emuBHeld || bHeld);
+            UpdateState(emuAPressed, emuBPressed, emuAHeld || aHeld, emuBHeld || bHeld);*/
         }
 
         public override void SendEmulationUpdateBlock()
@@ -155,6 +155,30 @@ namespace Logic.Blocks
 
         public override void FixedUpdateBlock()
         {
+            
+        }
+
+        public override void UpdateBlock()
+        {
+            //base.UpdateBlock();
+            if (Time.timeScale == 0f)
+                return;
+
+            aPressed = MAKey.Pressed();
+            bPressed = MBKey.Pressed();
+            aHeld = MAKey.Holding();
+            bHeld = MBKey.Holding();
+            //UpdateState(aPressed, bPressed, aHeld || emuAHeld, bHeld || emuBHeld);
+            UpdateState(aPressed, bPressed, aHeld, bHeld);
+            if (A)
+                leaverA.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            else
+                leaverA.localRotation = Quaternion.Euler(0f, 0f, 0f);
+            if ((gateType != 0 && B) || (gateType == GateType.NOT && A))
+                leaverB.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            else
+                leaverB.localRotation = Quaternion.Euler(0f, 0f, 0f);
+
             bool result = false;
             switch (gateType)
             {
@@ -181,28 +205,6 @@ namespace Logic.Blocks
                     break;
             }
             SetEmulation(result ? 1 : 0);
-        }
-
-        public override void UpdateBlock()
-        {
-            //base.UpdateBlock();
-            if (Time.timeScale == 0f)
-                return;
-
-            aPressed = aKey.IsPressed;
-            bPressed = bKey.IsPressed;
-            aHeld = aKey.IsHeld;
-            bHeld = bKey.IsHeld;
-            UpdateState(aPressed, bPressed, aHeld || emuAHeld, bHeld || emuBHeld);
-            if (A)
-                leaverA.localRotation = Quaternion.Euler(0f, 0f, -90f);
-            else
-                leaverA.localRotation = Quaternion.Euler(0f, 0f, 0f);
-            if ((gateType != 0 && B) || (gateType == GateType.NOT && A))
-                leaverB.localRotation = Quaternion.Euler(0f, 0f, -90f);
-            else
-                leaverB.localRotation = Quaternion.Euler(0f, 0f, 0f);
-            
         }
 
         protected override void OnDisable()

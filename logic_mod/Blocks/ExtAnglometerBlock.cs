@@ -139,9 +139,9 @@ namespace Logic.Blocks
         float ledActive;
         public override void EmulationUpdateBlock()
         {
-            emuActivatePressed = activateKey.EmulationPressed();
-            emuActivateHeld = activateKey.EmulationHeld(includePressed: true);
-            UpdateIsDetectingState(emuActivatePressed, emuActivateHeld || activateHeld);
+            //emuActivatePressed = activateKey.EmulationPressed();
+            //emuActivateHeld = activateKey.EmulationHeld(includePressed: true);
+            //UpdateIsDetectingState(emuActivatePressed, emuActivateHeld || activateHeld);
         }
         public override void UpdateBlock()
         {
@@ -157,9 +157,10 @@ namespace Logic.Blocks
                 detectedOnceForThisFrame = true;
                 return;
             }
-            activatePressed = activateKey.IsPressed;
-            activateHeld = activateKey.IsHeld;
-            UpdateIsDetectingState(activatePressed, activateHeld || emuActivateHeld);
+            activatePressed = MActivateKey.Pressed();
+            activateHeld = MActivateKey.Holding();
+            //UpdateIsDetectingState(activatePressed, activateHeld || emuActivateHeld);
+            UpdateIsDetectingState(activatePressed, activateHeld);
             AnimateHand(targetDir, isDetecting);
             detectedOnceForThisFrame = false;
         }

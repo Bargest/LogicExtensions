@@ -103,9 +103,9 @@ namespace Logic.Blocks
 
         public override void EmulationUpdateBlock()
         {
-            emuActivatePressed = activateKey.EmulationPressed();
-            emuActivateHeld = activateKey.EmulationHeld(includePressed: true);
-            UpdateIsDetectingState(emuActivatePressed, emuActivateHeld || activateHeld);
+            //emuActivatePressed = activateKey.EmulationPressed();
+            //emuActivateHeld = activateKey.EmulationHeld(includePressed: true);
+            //UpdateIsDetectingState(emuActivatePressed, emuActivateHeld || activateHeld);
         }
 
         public override void UpdateBlock()
@@ -125,10 +125,11 @@ namespace Logic.Blocks
                 return;
             }
 
-            activatePressed = activateKey.IsPressed;
-            activateHeld = activateKey.IsHeld;
-            UpdateIsDetectingState(activatePressed, activateHeld || emuActivateHeld);
-            
+            activatePressed = MActivateKey.Pressed();
+            activateHeld = MActivateKey.Holding();
+            //UpdateIsDetectingState(activatePressed, activateHeld || emuActivateHeld);
+            UpdateIsDetectingState(activatePressed, activateHeld);
+
             float targetHeiht, curHeight = Height;
             if (maxHeigthSlider.Value <= heightSlider.Value)
                 targetHeiht = heightSlider.Value;
