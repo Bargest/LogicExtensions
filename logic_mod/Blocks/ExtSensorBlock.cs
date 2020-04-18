@@ -155,7 +155,7 @@ namespace Logic.Blocks
             return false;
         }
 
-        void CheckPoint(Collider coll, Vector3 point)
+        void CheckPoint(Collider coll, Vector3 point, Color color)
         {
             // we sacrifice the real (0;0;0) point because it's probability is near zero
             // but all FA points go to this coordinate
@@ -170,7 +170,7 @@ namespace Logic.Blocks
             }
             
             if (ModContext.DrawSensorDebug)
-                DebugDraw.DrawSphere(point, 0.3f, Color.red);
+                DebugDraw.DrawSphere(point, 0.3f, color);
         }
         protected void NewEvaluateSensor()
         {
@@ -210,6 +210,7 @@ namespace Logic.Blocks
                     foundColliders.Add(collider);
                     foreach (var hit in colliderPoints.Value)
                     {
+                        var hitPoint = hit.point;
                         if (hit.point == Vector3.zero && hit.normal == -forward)
                         {
                             float step = radius / 2;
@@ -236,14 +237,17 @@ namespace Logic.Blocks
                                 var newCasts = Physics.SphereCastAll(resultPoint, lastNonOverlapRadius, forward, radius, sensorMask)
                                     .Where(x => x.collider == collider).ToList();
                                 if (newCasts.Count > 0)
-                                    CheckPoint(collider, newCasts[0].point);
+                                    hitPoint = newCasts[0].point;
+                                    //CheckPoint(collider, newCasts[0].point, Color.blue);
                                 //else
                                 //    Debug.Log($"{step} {collider}");
                             }
                         }
-                        else
+                        if (hitPoint != Vector3.zero)
                         {
-                            CheckPoint(collider, hit.point);
+                            var finalColl = collider.Raycast(new Ray(sensorPos.position, hitPoint - sensorPos.position), out RaycastHit finalHit, totalHeight);
+                            if (finalColl)
+                                CheckPoint(collider, finalHit.point, Color.red);
                         }
                     }
                 }
