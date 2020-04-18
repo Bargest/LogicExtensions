@@ -155,12 +155,6 @@ namespace Logic.Blocks
 
         public override void FixedUpdateBlock()
         {
-            
-        }
-
-        public override void UpdateBlock()
-        {
-            //base.UpdateBlock();
             if (Time.timeScale == 0f)
                 return;
 
@@ -205,6 +199,12 @@ namespace Logic.Blocks
                     break;
             }
             SetEmulation(result ? 1 : 0);
+        }
+
+        public override void UpdateBlock()
+        {
+            //base.UpdateBlock();
+            
         }
 
         protected override void OnDisable()
