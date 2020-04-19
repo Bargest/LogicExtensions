@@ -26,18 +26,35 @@ namespace Logic.BlockScripts
                 savedSpeed = flyingController.SpeedSlider.Value;
         }
 
+        Vector3 CalculateForce(float flySpeed)
+        {
+            var reverseMultiplier = ((!flyingController.ReverseToggle.IsActive) ? 1f : (-1f));
+            var magnitude = 100f * flySpeed * reverseMultiplier;
+            var force = flyingController.transform.forward * magnitude;
+            return force - flyingController.Rigidbody.velocity * flyingController.dragScaler;
+        }
+
         public override void OnFixedUpdateHost()
         {
             base.OnFixedUpdateHost();
-            if (!FPLogic.IsActive)
+            if (!BB.isSimulating)
                 return;
 
-            if (!BB.isSimulating)
+            if (!FPLogic.IsActive)
                 return;
 
             var floatValue = machineHandler.ReadValue(flyingController.FlyKey);
             if (floatValue != 0)
-                flyingController.SpeedSlider.Value = Mathf.Lerp(0, savedSpeed, floatValue);
+                floatValue = Mathf.Lerp(0, savedSpeed, floatValue);
+
+            // It seems that after last update FlyingController stopped using speedSlider.Value directly.
+            // And of course new field used - 'magnitude' - is private.
+            // Because we need to replace the original force, calculated from savedSpeed, by our new finalForce,
+            // we reimplement force calculations the same way as in game, subtract this force and pray
+            // this calculation will not change.
+            var finalForce = CalculateForce(floatValue);
+            var originalForce = CalculateForce(savedSpeed);
+            flyingController.Rigidbody.AddForce(-originalForce + finalForce);
         }
     }
 }

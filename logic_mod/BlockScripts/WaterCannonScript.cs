@@ -38,11 +38,7 @@ namespace Logic.BlockScripts
                 return;
 
             var floatValue = machineHandler.ReadValue(waterCannonController.ShootKey);
-            float newValue;
-            if (savedSpeed >= 0)
-                newValue = Mathf.Lerp(0, savedSpeed, floatValue);
-            else
-                newValue = Mathf.Lerp(savedSpeed, 0, floatValue);
+            float newValue = Mathf.Lerp(0, savedSpeed, floatValue);
 
             if (!Mathf.Approximately(waterCannonController.StrengthSlider.Value, newValue))
             {
