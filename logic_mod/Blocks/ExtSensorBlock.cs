@@ -238,16 +238,23 @@ namespace Logic.Blocks
                                     .Where(x => x.collider == collider).ToList();
                                 if (newCasts.Count > 0)
                                     hitPoint = newCasts[0].point;
-                                    //CheckPoint(collider, newCasts[0].point, Color.blue);
-                                //else
-                                //    Debug.Log($"{step} {collider}");
                             }
                         }
                         if (hitPoint != Vector3.zero)
                         {
-                            var finalColl = collider.Raycast(new Ray(sensorPos.position, hitPoint - sensorPos.position), out RaycastHit finalHit, totalHeight);
+                            var ray = new Ray(sensorPos.position, hitPoint - sensorPos.position);
+                            //var finalColl = Physics.Raycast(sensorPos.position, hitPoint - sensorPos.position, out RaycastHit finalHit, totalHeight, sensorMask);
+                            var finalColl = collider.Raycast(ray, out RaycastHit finalHit, totalHeight);
                             if (finalColl)
-                                CheckPoint(collider, finalHit.point, Color.red);
+                            {
+                                hitPoint = finalHit.point;
+                            }
+                            else
+                            {
+                                string comment_wtf1 = "Wait what? I've just found this point by SpehreCast, and can't find it again by RayCast? Wtf...";
+                                string comment_wtf2 = "Actually, this regularly happens on mountain sandbox, so just fallback to inaccurate result";
+                            }
+                            CheckPoint(collider, hitPoint, Color.red);
                         }
                     }
                 }
