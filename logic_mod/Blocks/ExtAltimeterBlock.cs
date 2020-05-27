@@ -72,9 +72,9 @@ namespace Logic.Blocks
             return newKey;
         }
 
-        public MExtKey MActivateKey => activateKey as MExtKey;
+        public MExtKey MActivateKey => ActivateKey as MExtKey;
         public MExtKey MEmulateKey => EmulateKey as MExtKey;
-        public MSlider maxHeigthSlider;
+        public MSlider MaxHeigthSlider;
 
         public override MKey AddKey(MKey key)
         {
@@ -92,10 +92,12 @@ namespace Logic.Blocks
                 MEmulateKey.Text.DisplayName = "EMU";
             AddText(MActivateKey.Text);
             AddText(MEmulateKey.Text);
-            maxHeigthSlider = AddSliderUnclamped("<" + heightSlider.DisplayName, heightSlider.Key + "_2", 0.0f, 0.0f, 250f);
+            MaxHeigthSlider = AddSliderUnclamped("<" + heightSlider.DisplayName, heightSlider.Key + "_2", 0.0f, 0.0f, 250f);
             heightSlider.DisplayName = ">" + heightSlider.DisplayName;
         }
 
+        // Here goes copy-paste from decompile
+        // But we change logic a bit for ExtKeys compability
         bool isDetecting, toggle;
         bool detectedOnceForThisFrame;
         bool activatePressed, emuActivatePressed, activateHeld, emuActivateHeld;
@@ -103,9 +105,12 @@ namespace Logic.Blocks
 
         public override void EmulationUpdateBlock()
         {
-            //emuActivatePressed = activateKey.EmulationPressed();
-            //emuActivateHeld = activateKey.EmulationHeld(includePressed: true);
-            //UpdateIsDetectingState(emuActivatePressed, emuActivateHeld || activateHeld);
+            // We remove the following code, because emulations via ExtKeys are supposed to look as much 'native' as possible
+            /*
+              emuActivatePressed = activateKey.EmulationPressed();
+              emuActivateHeld = activateKey.EmulationHeld(includePressed: true);
+              UpdateIsDetectingState(emuActivatePressed, emuActivateHeld || activateHeld);
+            */
         }
 
         public override void UpdateBlock()
@@ -127,16 +132,20 @@ namespace Logic.Blocks
 
             activatePressed = MActivateKey.Pressed();
             activateHeld = MActivateKey.Holding();
-            //UpdateIsDetectingState(activatePressed, activateHeld || emuActivateHeld);
-            UpdateIsDetectingState(activatePressed, activateHeld);
+            UpdateIsDetectingState(activatePressed, activateHeld /*|| emuActivateHeld*/); // we removed emuActivateHeld intentionally
 
-            float targetHeiht, curHeight = Height;
-            if (maxHeigthSlider.Value <= heightSlider.Value)
+            float targetHeiht, curHeight;
+            if (MaxHeigthSlider.Value <= heightSlider.Value)
+            {
+                // Normal mode
+                curHeight = Height;
                 targetHeiht = heightSlider.Value;
+            }
             else
             {
+                // Lerp mode
                 curHeight = (Height - heightSlider.Value) * 2;
-                targetHeiht = maxHeigthSlider.Value - heightSlider.Value;
+                targetHeiht = MaxHeigthSlider.Value - heightSlider.Value;
             }
 
             AnimateHand(curHeight, targetHeiht, isDetecting);
@@ -169,10 +178,11 @@ namespace Logic.Blocks
                 ledActive = active;
             }
         }
+
         public void SetEmulation(float v)
         {
             ToggleLED(v);
-            MEmulateKey.SetOutValue(this, v);//StartEmulation/StopEmulation;
+            MEmulateKey.SetOutValue(this, v); // publish float value instead of old style StartEmulation/StopEmulation
         }
 
         public override void OnRemoteEmulate(MKey key, bool emulate)
@@ -193,14 +203,21 @@ namespace Logic.Blocks
             {
                 return;
             }
-            float outValue = 0;
+            float outValue;
             if (!isDetecting)
+            {
+                // Disable
                 outValue = 0;
-            else if (maxHeigthSlider.Value <= heightSlider.Value)
+            }
+            else if (MaxHeigthSlider.Value <= heightSlider.Value)
+            {
+                // Normal mode - generate 0 or 1
                 outValue = ((!inverted.IsActive) ? (Height > heightSlider.Value) : (Height < heightSlider.Value)) ? 1 : 0;
+            }
             else
             {
-                var heightDiff = Mathf.Clamp01((Height - heightSlider.Value) / (maxHeigthSlider.Value - heightSlider.Value));
+                // Lerp mode - calculate lerp between sliders
+                var heightDiff = Mathf.Clamp01((Height - heightSlider.Value) / (MaxHeigthSlider.Value - heightSlider.Value));
                 outValue = (!inverted.IsActive) ? heightDiff : 1.0f - heightDiff;
             }
 

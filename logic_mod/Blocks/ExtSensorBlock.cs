@@ -68,13 +68,11 @@ namespace Logic.Blocks
         MExtKey ExtendKey(MKey baseKey, KeyCode defaultValue)
         {
             var newKey = new MExtKey(baseKey.NameLocalisationId, baseKey.Key, defaultValue, this, baseKey.isEmulator);
-            //newKey.DeSerialize(baseKey.Serialize());
             return newKey;
         }
 
         public MExtKey MActivateKey => activateKey as MExtKey;
         public MExtKey MEmulateKey => EmulateKey as MExtKey;
-
         public MToggle LerpMode;
 
         public override MKey AddKey(MKey key)
@@ -105,6 +103,7 @@ namespace Logic.Blocks
 
         bool NeedCollider(Collider collider)
         {
+            // Nearly copy-paste from ILSPY with little changes
             BlockBehaviour componentInParent = collider.transform.GetComponentInParent<BlockBehaviour>();
             if (collider.transform.GetComponentInParent<BlockBehaviour>() == this)
                 return false;
@@ -157,8 +156,8 @@ namespace Logic.Blocks
 
         void CheckPoint(Collider coll, Vector3 point, Color color)
         {
-            // we sacrifice the real (0;0;0) point because it's probability is near zero
-            // but all FA points go to this coordinate
+            // we sacrifice detecting the real (0;0;0) point because probability of running exactly in this point is about zero
+            // but all FalseAlarm points go to this coordinate, so we can easily find them
             if (point == Vector3.zero)
                 return;
 
@@ -169,6 +168,7 @@ namespace Logic.Blocks
                 closestCollider = coll;
             }
             
+            // Draw the red sphere at collision point in debug (to make game lag lol)
             if (ModContext.DrawSensorDebug)
                 DebugDraw.DrawSphere(point, 0.3f, color);
         }
@@ -243,7 +243,6 @@ namespace Logic.Blocks
                         if (hitPoint != Vector3.zero)
                         {
                             var ray = new Ray(sensorPos.position, hitPoint - sensorPos.position);
-                            //var finalColl = Physics.Raycast(sensorPos.position, hitPoint - sensorPos.position, out RaycastHit finalHit, totalHeight, sensorMask);
                             var finalColl = collider.Raycast(ray, out RaycastHit finalHit, totalHeight);
                             if (finalColl)
                             {
@@ -251,7 +250,7 @@ namespace Logic.Blocks
                             }
                             else
                             {
-                                string comment_wtf1 = "Wait what? I've just found this point by SpehreCast, and can't find it again by RayCast? Wtf...";
+                                string comment_wtf1 = "Wait what? I've just found this point by SphereCast, and can't find it again by RayCast? Wtf...";
                                 string comment_wtf2 = "Actually, this regularly happens on mountain sandbox, so just fallback to inaccurate result";
                             }
                             CheckPoint(collider, hitPoint, Color.red);
@@ -307,7 +306,6 @@ namespace Logic.Blocks
         }
 
         float ledActive;
-
         bool activatePressed, emuActivatePressed, activateHeld, emuActivateHeld;
         public override void EmulationUpdateBlock()
         {
@@ -333,8 +331,7 @@ namespace Logic.Blocks
             }
             activatePressed = MActivateKey.Pressed();
             activateHeld = MActivateKey.Holding();
-            //UpdateIsDetectingState(activatePressed, activateHeld || emuActivateHeld);
-            UpdateIsDetectingState(activatePressed, activateHeld);
+            UpdateIsDetectingState(activatePressed, activateHeld /* || emuActivateHeld*/);
             detectedOnceForThisFrame = false;
         }
 

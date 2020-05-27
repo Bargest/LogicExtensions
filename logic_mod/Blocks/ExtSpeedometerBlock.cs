@@ -53,7 +53,7 @@ namespace Logic.Blocks
             for (int i = 0; i < componentsInChildren.Length; i++)
                 componentsInChildren[i].block = this;
 
-            speedSlider = baseObject.HeightSlider; // really?
+            speedSlider = baseObject.HeightSlider; // wait, really?
             nonAuto = baseObject.NonAuto;
             holdToDetect = baseObject.HoldToDetect;
             inverted = baseObject.Inverted;
@@ -68,7 +68,6 @@ namespace Logic.Blocks
         MExtKey ExtendKey(MKey baseKey, KeyCode defaultValue)
         {
             var newKey = new MExtKey(baseKey.NameLocalisationId, baseKey.Key, defaultValue, this, baseKey.isEmulator);
-            //newKey.DeSerialize(baseKey.Serialize());
             return newKey;
         }
 
@@ -144,8 +143,7 @@ namespace Logic.Blocks
             }
             activatePressed = MActivateKey.Pressed();
             activateHeld = MActivateKey.Holding();
-            //UpdateIsDetectingState(activatePressed, activateHeld || emuActivateHeld);
-            UpdateIsDetectingState(activatePressed, activateHeld);
+            UpdateIsDetectingState(activatePressed, activateHeld /*|| emuActivateHeld*/);
             if (noRigidbody)
             {
                 Vector3 position = VisualController.MeshFilter.transform.position;
@@ -157,9 +155,13 @@ namespace Logic.Blocks
             }
             float targetSpeed, curSpeed = ESqrSpeed;
             if (maxSpeedSlider.Value <= speedSlider.Value)
+            {
+                // Normal mode
                 targetSpeed = speedSlider.Value;
+            }
             else
             {
+                // Lerp mode
                 curSpeed = (float)(Math.Sqrt(ESqrSpeed) - speedSlider.Value);
                 curSpeed = curSpeed < 0 ? 0 : curSpeed * curSpeed * 2;
                 targetSpeed = maxSpeedSlider.Value - speedSlider.Value;
@@ -206,13 +208,20 @@ namespace Logic.Blocks
                 StopEmulation();
                 return;
             }
-            float outValue = 0;
+            float outValue;
             if (!isDetecting)
+            {
+                // Disable
                 outValue = 0;
+            }
             else if (maxSpeedSlider.Value <= speedSlider.Value)
+            {
+                // Normal mode
                 outValue = ((!inverted.IsActive) ? (ESqrSpeed > speedSlider.Value * speedSlider.Value) : (ESqrSpeed < speedSlider.Value * speedSlider.Value)) ? 1 : 0;
+            }
             else
             {
+                // Lerp mode
                 var curSpeed = (float)(Math.Sqrt(ESqrSpeed) - speedSlider.Value);
                 var heightDiff = Mathf.Clamp01(curSpeed / (maxSpeedSlider.Value - speedSlider.Value));
                 outValue = (!inverted.IsActive) ? heightDiff : 1.0f - heightDiff;

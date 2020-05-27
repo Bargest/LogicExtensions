@@ -78,7 +78,6 @@ namespace Logic.Blocks
         public override MKey AddKey(MKey key)
         {
             key = base.AddKey(ExtendKey(key, key.GetKey(0)));
-            //var keyIdx = MapperTypes.IndexOf(key);
             return key;
         }
 
@@ -108,7 +107,7 @@ namespace Logic.Blocks
         public void SetEmulation(float v)
         {
             ToggleLED(v);
-            MEmulateKey.SetOutValue(this, v);//StartEmulation/StopEmulation;
+            MEmulateKey.SetOutValue(this, v); // instead of StartEmulation/StopEmulation;
         }
 
         public override void OnRemoteEmulate(MKey key, bool emulate)
@@ -203,8 +202,7 @@ namespace Logic.Blocks
 
         public override void UpdateBlock()
         {
-            //base.UpdateBlock();
-            
+            // base.UpdateBlock();   
         }
 
         protected override void OnDisable()

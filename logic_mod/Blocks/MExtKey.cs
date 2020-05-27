@@ -86,7 +86,7 @@ namespace Logic.Blocks
 
             try
             {
-                freezeUpdate = true;
+                freezeUpdate = true; // prevent recursion! Or we will get loop as Text.Change -> Key.Change -> Text.Change -> ...
                 foreach (var val in ParseText(value, origKeys))
                 {
                     if (val <= MaxKey)
@@ -155,7 +155,6 @@ namespace Logic.Blocks
 
         public override XData Serialize()
         {
-            // Debug.Log($"Serialize emu={isEmulator}, uc={UpdatedKeyCodes.Count}");
             string[] array = new string[KeysCount + (ignored ? 1 : 0)];
             int i;
             for (i = 0; i < KeysCount; i++)
@@ -167,7 +166,6 @@ namespace Logic.Blocks
 
         public override XData SerializeLoadValue()
         {
-            //Debug.LogWarning($"Serialize load");
             var saved = ((string[])(base.SerializeLoadValue() as XStringArray));
             var last = saved.LastOrDefault();
             var loadIgnored = last != null && last.ToLower().StartsWith("ignored=true");
@@ -215,13 +213,10 @@ namespace Logic.Blocks
                 if (!uint.TryParse(key, out uint extKey) || extKey < MaxKey)
                     continue;
 
-                // Debug.Log("DeSerialize " + key);
                 UpdatedKeyCodes[i] = extKey;
-                // AddOrReplaceKey(i, (KeyCode)extKey);
             }
             UpdateText();
             InvokeKeysChanged();
-            // Debug.Log($"Deserialize {raw} for emu={isEmulator}, uc={UpdatedKeyCodes.Count}");
         }
 
         public void SetKeycodes(KeyInputController input, Func<uint, float> machineEmu)

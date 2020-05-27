@@ -118,7 +118,6 @@ namespace Logic.Blocks
             if (localPlayer == null || localPlayer.IsHost)
                 return;
 
-            // Debug.Log("Send data!");
             BlockMapper.OnEditField(BlockBehaviour, mapper);
             tempdata.Encode(out byte[] dataBytes);
 
@@ -131,7 +130,6 @@ namespace Logic.Blocks
 
         public void AfterEdit_ServerRecv(byte[] data)
         {
-            // Debug.Log("Recv data!");
             var xholder = new XDataHolder();
             xholder.Decode(data, 0);
             BlockBehaviour.OnLoad(xholder, CopyMode.All);

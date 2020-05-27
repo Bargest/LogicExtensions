@@ -67,7 +67,6 @@ namespace Logic.Blocks
         MExtKey ExtendKey(MKey baseKey, KeyCode defaultValue)
         {
             var newKey = new MExtKey(baseKey.NameLocalisationId, baseKey.Key, defaultValue, this, baseKey.isEmulator);
-            //newKey.DeSerialize(baseKey.Serialize());
             return newKey;
         }
 
@@ -159,8 +158,7 @@ namespace Logic.Blocks
             }
             activatePressed = MActivateKey.Pressed();
             activateHeld = MActivateKey.Holding();
-            //UpdateIsDetectingState(activatePressed, activateHeld || emuActivateHeld);
-            UpdateIsDetectingState(activatePressed, activateHeld);
+            UpdateIsDetectingState(activatePressed, activateHeld /* || emuActivateHeld)*/);
             AnimateHand(targetDir, isDetecting);
             detectedOnceForThisFrame = false;
         }

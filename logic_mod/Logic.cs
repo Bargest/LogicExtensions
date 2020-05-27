@@ -66,6 +66,8 @@ namespace Logic
             }, "print sensor debug points");
 
             CpuBlock.Create(this);
+            // These creator functions find corresponding block in game prefabs
+            // and replace it with inheritor
             ExtLogicGate.Create(this);
             ExtAltimeterBlock.Create(this);
             ExtSpeedometerBlock.Create(this);
@@ -80,8 +82,8 @@ namespace Logic
             LineMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
             LineMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
             LineMaterial.SetInt("_ZWrite", 0);
-            Camera.onPostRender += DrawConnectingLines;
 
+            Camera.onPostRender += DrawConnectingLines;
             Events.OnBlockInit += InitBlock;
 
             CpuInfoMessage = ModNetworking.CreateMessageType(new DataType[]
@@ -131,6 +133,7 @@ namespace Logic
             if (machine != null && !MachineHandlers.ContainsKey(machine))
                 MachineHandlers[machine] = new MachineHandler(machine);
 
+            // Registaer patches for FPIO controlled block
             foreach (var kp in AdditionScripts)
             {
                 if (kp.Key.IsInstanceOfType(block.InternalObject) && block.GameObject.GetComponent(kp.Value) == null)
@@ -146,6 +149,7 @@ namespace Logic
 
         public void PlaceAdditionScripts(BlockBehaviour block)
         {
+            // Reset state for all patches for FPIO controlled blocks
             foreach (var kp in AdditionScripts)
             {
                 if (kp.Key.IsInstanceOfType(block))
@@ -174,7 +178,7 @@ namespace Logic
         }
 
         // -----------------------------------------------
-
+        // KeyValuePair is a replacement for Tuple
         public List<KeyValuePair<Vector3, Vector3>> IncomingLines = new List<KeyValuePair<Vector3, Vector3>>();
         public List<KeyValuePair<Vector3, Vector3>> OutgoingLines = new List<KeyValuePair<Vector3, Vector3>>();
 
@@ -182,7 +186,7 @@ namespace Logic
         {
             if (Camera.main != cam)
                 return;
-            //Debug.Log($"{DateTime.Now} {IncomingLines.Count}, {OutgoingLines.Count}");
+            
             LineMaterial.SetPass(0);
             foreach (var point in IncomingLines)
             {
@@ -202,17 +206,25 @@ namespace Logic
             }
         }
 
-        DateTime lastGc = DateTime.Now;
+        void ClearConnectionLines()
+        {
+            if (IncomingLines.Count > 0)
+                IncomingLines = new List<KeyValuePair<Vector3, Vector3>>();
+            if (OutgoingLines.Count > 0)
+                OutgoingLines = new List<KeyValuePair<Vector3, Vector3>>();
+        }
+
         public void Update()
         {
             if (Camera.current == null)
                 return;
 
+            // Run garbage collectors (details are inside)
             foreach (var mh in MachineHandlers.Values)
                 mh.Collect();
 
-            IncomingLines = new List<KeyValuePair<Vector3, Vector3>>();
-            OutgoingLines = new List<KeyValuePair<Vector3, Vector3>>();
+            // The following crazy linq code collects all connection lines, that are visible while holding `
+            ClearConnectionLines();
             if (Game.IsSimulating || !Input.GetKey(KeyCode.BackQuote))
                 return;
 
@@ -247,11 +259,11 @@ namespace Logic
                 {
                     foreach (var mkey in cpu.PIO.Values)
                     {
-                        foreach (var target in machineHandler.GetMKeys(mkey).Where(x => inputs.ContainsKey(x)).SelectMany(x => inputs[x]).Where(x => x != block)
-                                .Where(x => x.Rigidbody != null))
+                        foreach (var target in machineHandler.GetMKeys(mkey).Where(x => inputs.ContainsKey(x))
+                                .SelectMany(x => inputs[x]).Where(x => x != block).Where(x => x.Rigidbody != null))
                             OutgoingLines.Add(new KeyValuePair<Vector3, Vector3>(block.Rigidbody.position, target.Rigidbody.position));
-                        foreach (var source in machineHandler.GetMKeys(mkey).Where(x => outputs.ContainsKey(x)).SelectMany(x => outputs[x]).Where(x => x != block)
-                                .Where(x => x.Rigidbody != null))
+                        foreach (var source in machineHandler.GetMKeys(mkey).Where(x => outputs.ContainsKey(x))
+                                .SelectMany(x => outputs[x]).Where(x => x != block).Where(x => x.Rigidbody != null))
                             IncomingLines.Add(new KeyValuePair<Vector3, Vector3>(source.Rigidbody.position, block.Rigidbody.position));
                     }
                 }
@@ -259,17 +271,16 @@ namespace Logic
                 {
                     foreach (var mkey in block.MapperTypes.Where(y => y is MKey).Select(y => y as MKey))
                     {
-
                         if (mkey.isEmulator) // Draw outgoing lines
                         {
-                            foreach (var target in machineHandler.GetMKeys(mkey).Where(x => inputs.ContainsKey(x)).SelectMany(x => inputs[x]).Where(x => x != block)
-                                    .Where(x => x.Rigidbody != null))
+                            foreach (var target in machineHandler.GetMKeys(mkey).Where(x => inputs.ContainsKey(x))
+                                        .SelectMany(x => inputs[x]).Where(x => x != block).Where(x => x.Rigidbody != null))
                                 OutgoingLines.Add(new KeyValuePair<Vector3, Vector3>(block.Rigidbody.position, target.Rigidbody.position));
                         }
                         else // Draw incoming lines
                         {
-                            foreach (var source in machineHandler.GetMKeys(mkey).Where(x => outputs.ContainsKey(x)).SelectMany(x => outputs[x]).Where(x => x != block)
-                                    .Where(x => x.Rigidbody != null))
+                            foreach (var source in machineHandler.GetMKeys(mkey).Where(x => outputs.ContainsKey(x))
+                                        .SelectMany(x => outputs[x]).Where(x => x != block).Where(x => x.Rigidbody != null))
                                 IncomingLines.Add(new KeyValuePair<Vector3, Vector3>(source.Rigidbody.position, block.Rigidbody.position));
                         }
                     }
@@ -287,6 +298,16 @@ namespace Logic
         }
 
         public override string Name => "LogicExtensions";
+
+        public MachineHandler GetMachineHandler(BlockBehaviour block)
+        {
+            var machine = block.ParentMachine;
+            if (MachineHandlers.ContainsKey(machine))
+                return MachineHandlers[machine];
+            return null;
+        }
+        // Gui-related stuff
+        // ----------------------------------------------------------------
 
         CpuBlock SelectedCpu = null;
         CpuBlock PrevCpu = null;
@@ -317,13 +338,6 @@ namespace Logic
             }
         }
 
-        public MachineHandler GetMachineHandler(BlockBehaviour block)
-        {
-            var machine = block.ParentMachine;
-            if (MachineHandlers.ContainsKey(machine))
-                return MachineHandlers[machine];
-            return null;
-        }
 
         IEnumerable<IEnumerable<T>> Batch<T>(IEnumerable<T> obj, int batch)
         {
@@ -456,37 +470,6 @@ namespace Logic
             GUILayout.Label(statusText);
             GUILayout.EndVertical();
             GUI.DragWindow();
-
-            /*int controlID = GUIUtility.GetControlID(FocusType.Keyboard);
-            var gUIContent = ((GUIUtility.keyboardControl == controlID) ? new GUIContent(newText + Input.compositionString) : new GUIContent(newText));
-            var rect = GUILayoutUtility.GetRect(gUIContent, textStyle, GUILayout.Width(300), GUILayout.Height(500));
-            newText = GUI.TextArea(rect, newText, textStyle);
-            var editor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
-
-            var tags = TagRegex.Matches(newText);
-            var ci = editor.cursorIndex;
-            // if inside of match - move to the end of match
-            for (int i = 0; i < tags.Count; ++i)
-            {
-                var tag = tags[i];
-                if (tag.Index <= ci && tag.Index + tag.Length > ci)
-                {
-                    for (int j = 0; j < tag.Length - ci; ++j)
-                        editor.MoveRight();
-                    break;
-                }
-            }
-
-            ci = editor.cursorIndex;
-            for (int i = 0; i < tags.Count; ++i)
-            {
-                var tag = tags[i];
-                if (tag.Index <= ci)
-                {
-                    for (int j = 0; j < tag.Length; ++j)
-                        editor.MoveLeft();
-                }
-            }*/
         }
 
     }
