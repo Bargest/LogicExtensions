@@ -200,6 +200,22 @@ namespace Logic.Blocks
                                 new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply cos") } },
                                 (c) => c.Cos
                             ),
+                            new CpuApiFunc("tan", true, "tan trigonometry function",
+                                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply tan") } },
+                                (c) => c.Tan
+                            ),
+                            new CpuApiFunc("asin", true, "asin trigonometry function",
+                                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply asin") } },
+                                (c) => c.Asin
+                            ),
+                            new CpuApiFunc("acos", true, "acos trigonometry function",
+                                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply acos") } },
+                                (c) => c.Acos
+                            ),
+                            new CpuApiFunc("atan", true, "atan trigonometry function",
+                                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply atan") } },
+                                (c) => c.Atan
+                            ),
                             new CpuApiFunc("log", true, "logarifm",
                                 new Dictionary<string, CpuApiFunc.ArgInfo>{
                                     { "value", new CpuApiFunc.ArgInfo("float", "value to apply logarifm") },

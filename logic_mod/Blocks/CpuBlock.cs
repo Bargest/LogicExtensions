@@ -351,6 +351,31 @@ namespace Logic.Blocks
                 throw new Exception("Invalid value");
             return (float)Math.Cos(v);
         }
+        public object Tan(VarCtx ctx, object[] x)
+        {
+            if (x.Length < 1 || !TryGetFloat(x[0], out float v))
+                throw new Exception("Invalid value");
+            return (float)Math.Tan(v);
+        }
+
+        public object Asin(VarCtx ctx, object[] x)
+        {
+            if (x.Length < 1 || !TryGetFloat(x[0], out float v))
+                throw new Exception("Invalid value");
+            return (float)Math.Asin(v);
+        }
+        public object Acos(VarCtx ctx, object[] x)
+        {
+            if (x.Length < 1 || !TryGetFloat(x[0], out float v))
+                throw new Exception("Invalid value");
+            return (float)Math.Acos(v);
+        }
+        public object Atan(VarCtx ctx, object[] x)
+        {
+            if (x.Length < 1 || !TryGetFloat(x[0], out float v))
+                throw new Exception("Invalid value");
+            return (float)Math.Atan(v);
+        }
         public object Log(VarCtx ctx, object[] x)
         {
             if (x.Length < 2 || !TryGetFloat(x[0], out float v) || !TryGetFloat(x[1], out float newBase))

@@ -380,7 +380,7 @@ namespace Logic
                     PrevCpu = SelectedCpu;
                     savedScript = lastScript = SelectedCpu.Script.Script;
                 }
-                uiRect = GUILayout.Window(windowId, new Rect(uiRect.position, Vector2.zero), GuiFunc, "CPU edit");
+                uiRect = GUILayout.Window(windowId, uiRect, GuiFunc, "CPU edit");
             }
             else
             {
