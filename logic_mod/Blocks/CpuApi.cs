@@ -144,6 +144,24 @@ namespace Logic.Blocks
                     },
                     (c) => c.ReadSensor
                 ),
+                new CpuApiFunc("readAlt", false, "get position of altimeter",
+                    new Dictionary<string, CpuApiFunc.ArgInfo>{
+                        { "pio", new CpuApiFunc.ArgInfo("int", "PIO id, that altimeter is emulating") } ,
+                    },
+                    (c) => c.ReadAlt
+                ),
+                new CpuApiFunc("readSpeed", false, "get speed of speedometer",
+                    new Dictionary<string, CpuApiFunc.ArgInfo>{
+                        { "pio", new CpuApiFunc.ArgInfo("int", "PIO id, that speedometer is emulating") } ,
+                    },
+                    (c) => c.ReadSpeed
+                ),
+                new CpuApiFunc("readAng", false, "get rotation and angular velocity of anglometer",
+                    new Dictionary<string, CpuApiFunc.ArgInfo>{
+                        { "pio", new CpuApiFunc.ArgInfo("int", "PIO id, that anglometer is emulating") } ,
+                    },
+                    (c) => c.ReadAng
+                ),
                 new CpuApiFunc("in", true, "read value from PIO",
                     new Dictionary<string, CpuApiFunc.ArgInfo>{
                         { "pio", new CpuApiFunc.ArgInfo("int", "PIO id") },

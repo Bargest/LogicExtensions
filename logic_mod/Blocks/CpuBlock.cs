@@ -487,6 +487,7 @@ namespace Logic.Blocks
             var r = machineHandler.ReadValue(PIO[(int)pio]);
             return r;
         }
+
         public object ReadSensor(VarCtx ctx, object[] x)
         {
             if (x.Length < 1)
@@ -497,6 +498,40 @@ namespace Logic.Blocks
             var emu = machineHandler.GetExtEmulator(PIO[(int)pio]);
             return (emu?.Parent as ExtSensorBlock)?.GetTargetObject();
         }
+
+        public object ReadAlt(VarCtx ctx, object[] x)
+        {
+            if (x.Length < 1)
+                return null;
+            if (!TryGetLong(x[0], out long pio) || !PIO.ContainsKey(pio))
+                return null;
+
+            var emu = machineHandler.GetExtEmulator(PIO[(int)pio]);
+            return (emu?.Parent as ExtAltimeterBlock)?.GetPos();
+        }
+
+        public object ReadSpeed(VarCtx ctx, object[] x)
+        {
+            if (x.Length < 1)
+                return null;
+            if (!TryGetLong(x[0], out long pio) || !PIO.ContainsKey(pio))
+                return null;
+
+            var emu = machineHandler.GetExtEmulator(PIO[(int)pio]);
+            return (emu?.Parent as ExtSpeedometerBlock)?.GetV();
+        }
+
+        public object ReadAng(VarCtx ctx, object[] x)
+        {
+            if (x.Length < 1)
+                return null;
+            if (!TryGetLong(x[0], out long pio) || !PIO.ContainsKey(pio))
+                return null;
+
+            var emu = machineHandler.GetExtEmulator(PIO[(int)pio]);
+            return (emu?.Parent as ExtAnglometerBlock)?.GetAng();
+        }
+
         public object Out(VarCtx ctx, object[] x)
         {
             if (x.Length < 2)
