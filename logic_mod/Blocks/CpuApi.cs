@@ -138,7 +138,7 @@ namespace Logic.Blocks
                     },
                     (c) => c.Irq
                 ),
-                new CpuApiFunc("readSensor", false, "get description of object targeted by sensor",
+                new CpuApiFunc("readSensor", false, "read sensor (emulator) measuers",
                     new Dictionary<string, CpuApiFunc.ArgInfo>{
                         { "pio", new CpuApiFunc.ArgInfo("int", "PIO id, that sensor is emulating") } ,
                     },
