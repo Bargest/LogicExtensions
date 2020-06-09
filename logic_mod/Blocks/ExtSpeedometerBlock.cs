@@ -95,6 +95,17 @@ namespace Logic.Blocks
             speedSlider.DisplayName = ">" + speedSlider.DisplayName;
         }
 
+        public Dictionary<string, object> GetV()
+        {
+            var myV = Rigidbody.velocity;
+            return new Dictionary<string, object>
+            {
+                { "x", myV.x },
+                { "y", myV.y },
+                { "z", myV.z }
+            };
+        }
+
         bool isDetecting, toggle;
         bool activatePressed, emuActivatePressed, activateHeld, emuActivateHeld;
         bool detectedOnceForThisFrame;

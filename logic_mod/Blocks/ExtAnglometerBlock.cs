@@ -134,6 +134,26 @@ namespace Logic.Blocks
             return (!(a < 0f)) ? a : (a + 360f);
         }
 
+        public Dictionary<string, object> GetAng()
+        {
+            var quaternion = Rigidbody.rotation;
+            var euler = quaternion.eulerAngles;
+            var angV = Rigidbody.angularVelocity;
+            return new Dictionary<string, object>
+            {
+                { "qw", quaternion.w },
+                { "qx", quaternion.x },
+                { "qy", quaternion.y },
+                { "qz", quaternion.z },
+                { "ex", euler.x },
+                { "ey", euler.y },
+                { "ez", euler.z},
+                { "vx", angV.x },
+                { "vy", angV.y },
+                { "vz", angV.z },
+            };
+        }
+
         bool activatePressed, emuActivatePressed, activateHeld, emuActivateHeld;
         float ledActive;
         public override void EmulationUpdateBlock()

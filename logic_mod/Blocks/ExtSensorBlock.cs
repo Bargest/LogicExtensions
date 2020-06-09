@@ -296,10 +296,19 @@ namespace Logic.Blocks
                                 : canBreak ? "breakable"
                                 : objectInfo != null ? "entity"
                                 : "other");
+            var relativePos = transform.position - sensorPos.position;
+            var targetV = rigidBody ? rigidBody.velocity : Vector3.zero;
+            
             detectedObjectInfo = new Dictionary<string, object>
             {
                 { "static", isStaic ? (long)1 : 0 },
-                { "type", objectType }
+                { "type", objectType },
+                { "x", relativePos.x },
+                { "y", relativePos.y },
+                { "z", relativePos.z },
+                { "vx", targetV.x },
+                { "vy", targetV.y },
+                { "vz", targetV.z }
             };
 
             return detectedObjectInfo;

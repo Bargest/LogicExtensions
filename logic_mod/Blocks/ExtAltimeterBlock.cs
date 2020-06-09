@@ -96,6 +96,17 @@ namespace Logic.Blocks
             heightSlider.DisplayName = ">" + heightSlider.DisplayName;
         }
 
+        public Dictionary<string, object> GetPos()
+        {
+            var myPos = Rigidbody.position;
+            return new Dictionary<string, object>
+            {
+                { "x", myPos.x },
+                { "y", myPos.y },
+                { "z", myPos.z }
+            };
+        }
+
         // Here goes copy-paste from decompile
         // But we change logic a bit for ExtKeys compability
         bool isDetecting, toggle;
