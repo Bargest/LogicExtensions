@@ -99,7 +99,9 @@ namespace Logic.Blocks
         public Dictionary<string, object> GetPos()
         {
             Vector3 myPos = Rigidbody.position;
-            return BlockUtils.Vec2Dict(myPos);
+            return new Dictionary<string, object> {
+                { "absolutePos", BlockUtils.Vec2Dict(myPos) }
+            };
         }
 
         // Here goes copy-paste from decompile

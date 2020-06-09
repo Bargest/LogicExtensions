@@ -136,13 +136,11 @@ namespace Logic.Blocks
 
         public Dictionary<string, object> GetAng()
         {
-            Quaternion quaternion = Rigidbody.rotation;
-            Vector3 euler = quaternion.eulerAngles;
+            Quaternion quaternion = base.transform.rotation;
             Vector3 angV = Rigidbody.angularVelocity;
             return new Dictionary<string, object>
             {
                 { "quaternion", BlockUtils.Quat2Dict(quaternion) },
-                { "euler", BlockUtils.Vec2Dict(euler) },
                 { "velocity", BlockUtils.Vec2Dict(angV) }
             };
         }

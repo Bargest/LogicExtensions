@@ -99,6 +99,7 @@ namespace Logic.Blocks
         int overlapCount;
         float closestDistance = 0;
         Collider closestCollider = null;
+        Vector3 closestPoint = Vector3.zero;
         Dictionary<string, object> detectedObjectInfo = null;
 
         bool NeedCollider(Collider collider)
@@ -166,6 +167,7 @@ namespace Logic.Blocks
             {
                 closestDistance = closeDist;
                 closestCollider = coll;
+                closestPoint = point;
             }
             
             // Draw the red sphere at collision point in debug (to make game lag lol)
@@ -296,7 +298,7 @@ namespace Logic.Blocks
                                 : canBreak ? "breakable"
                                 : objectInfo != null ? "entity"
                                 : "other");
-            Vector3 relativePos = transform.position - sensorPos.position;
+            Vector3 relativePos = closestPoint - sensorPos.position;
             Vector3 targetV = rigidBody ? rigidBody.velocity : Vector3.zero;
             
             detectedObjectInfo = new Dictionary<string, object>
@@ -304,7 +306,7 @@ namespace Logic.Blocks
                 { "static", isStaic ? (long)1 : 0 },
                 { "type", objectType },
                 { "relativePos", BlockUtils.Vec2Dict(relativePos) },
-                { "absolutePos", BlockUtils.Vec2Dict(transform.position) },
+                { "absolutePos", BlockUtils.Vec2Dict(closestPoint) },
                 { "velocity", BlockUtils.Vec2Dict(targetV) }
             };
 
