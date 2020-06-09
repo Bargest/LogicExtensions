@@ -97,13 +97,8 @@ namespace Logic.Blocks
 
         public Dictionary<string, object> GetV()
         {
-            var myV = Rigidbody.velocity;
-            return new Dictionary<string, object>
-            {
-                { "x", myV.x },
-                { "y", myV.y },
-                { "z", myV.z }
-            };
+            Vector3 myV = Rigidbody.velocity;
+            return BlockUtils.Vec2Dict(myV);
         }
 
         bool isDetecting, toggle;

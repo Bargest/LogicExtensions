@@ -98,13 +98,8 @@ namespace Logic.Blocks
 
         public Dictionary<string, object> GetPos()
         {
-            var myPos = Rigidbody.position;
-            return new Dictionary<string, object>
-            {
-                { "x", myPos.x },
-                { "y", myPos.y },
-                { "z", myPos.z }
-            };
+            Vector3 myPos = Rigidbody.position;
+            return BlockUtils.Vec2Dict(myPos);
         }
 
         // Here goes copy-paste from decompile
