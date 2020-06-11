@@ -311,8 +311,7 @@ namespace Logic
 
         CpuBlock SelectedCpu = null;
         CpuBlock PrevCpu = null;
-        string lastScript = "";
-        string savedScript = "";
+        string savedScript = "", sourceScript = "", editedScript = "";
         int windowId;
         Rect uiRect;
         GUIStyle textStyle;
@@ -378,7 +377,7 @@ namespace Logic
                 if (PrevCpu != SelectedCpu)
                 {
                     PrevCpu = SelectedCpu;
-                    savedScript = lastScript = SelectedCpu.Script.Script;
+                    savedScript = sourceScript = editedScript = SelectedCpu.Script.Value;
                 }
                 uiRect = GUILayout.Window(windowId, uiRect, GuiFunc, "CPU edit");
             }
@@ -438,12 +437,16 @@ namespace Logic
             SelectedCpu.RemovePIO(toDelete);
 
             scroll = GUILayout.BeginScrollView(scroll, GUILayout.Width(700), GUILayout.Height(600));
-            lastScript = GUILayout.TextArea(lastScript, textStyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+            // script could have changed because of Undo, so we update it with Script.Value
+            if (sourceScript != SelectedCpu.Script.Value)
+                sourceScript = editedScript = SelectedCpu.Script.Value;
+
+            editedScript = GUILayout.TextArea(editedScript, textStyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
             GUILayout.EndScrollView();
             //lastScript = StaticSettings.SanatizeString(newText);
-            if (savedScript != lastScript)
+            if (savedScript != editedScript)
             {
-                savedScript = lastScript;
+                savedScript = editedScript;
                 var e = SelectedCpu.CheckScript(savedScript);
                 UpdateScriptStatus(e);
             }
@@ -452,9 +455,11 @@ namespace Logic
             {
                 foreach (var k in KeyTexts.Keys.ToArray())
                 {
+                    var textChanged = k.GenerateText() != KeyTexts[k];
                     k.Text_TextChanged(KeyTexts[k]);
                     KeyTexts[k] = k.GenerateText();
-                    SelectedCpu.AfterEdit(k);
+                    if (textChanged)
+                        SelectedCpu.AfterEdit(k);
                 }
 
                 var e = SelectedCpu.ApplyScript(savedScript);

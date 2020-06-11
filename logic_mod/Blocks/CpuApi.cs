@@ -144,13 +144,13 @@ namespace Logic.Blocks
                     },
                     (c) => c.ReadSensor
                 ),
-                new CpuApiFunc("in", true, "read value from PIO",
+                new CpuApiFunc("in", false, "read value from PIO",
                     new Dictionary<string, CpuApiFunc.ArgInfo>{
                         { "pio", new CpuApiFunc.ArgInfo("int", "PIO id") },
                     },
                     (c) => c.In
                 ),
-                new CpuApiFunc("out", true, "write value to PIO",
+                new CpuApiFunc("out", false, "write value to PIO",
                     new Dictionary<string, CpuApiFunc.ArgInfo>{
                         { "pio", new CpuApiFunc.ArgInfo("int", "PIO id") },
                         { "value", new CpuApiFunc.ArgInfo("float", "value [0..1] to write") },
@@ -178,45 +178,45 @@ namespace Logic.Blocks
                     {
                         Api =  new List<CpuApiFunc>
                         {
-                            new CpuApiFunc("abs", true, "absolute value",
+                            new CpuApiFunc("abs", false, "absolute value",
                                 new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply abs") } },
                                 (c) => c.Abs
                             ),
-                            new CpuApiFunc("sqrt", true, "square root",
+                            new CpuApiFunc("sqrt", false, "square root",
                                 new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply square root") } },
                                 (c) => c.Sqrt
                             ),
-                            new CpuApiFunc("pow", true, "power x^y",
+                            new CpuApiFunc("pow", false, "power x^y",
                                 new Dictionary<string, CpuApiFunc.ArgInfo>{
                                     { "x", new CpuApiFunc.ArgInfo("float", "value to apply") },
                                     { "y", new CpuApiFunc.ArgInfo("float", "power") } },
                                 (c) => c.Pow
                             ),
-                            new CpuApiFunc("sin", true, "sin trigonometry function",
+                            new CpuApiFunc("sin", false, "sin trigonometry function",
                                 new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply sin") } },
                                 (c) => c.Sin
                             ),
-                            new CpuApiFunc("cos", true, "cos trigonometry function",
+                            new CpuApiFunc("cos", false, "cos trigonometry function",
                                 new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply cos") } },
                                 (c) => c.Cos
                             ),
-                            new CpuApiFunc("tan", true, "tan trigonometry function",
+                            new CpuApiFunc("tan", false, "tan trigonometry function",
                                 new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply tan") } },
                                 (c) => c.Tan
                             ),
-                            new CpuApiFunc("asin", true, "asin trigonometry function",
+                            new CpuApiFunc("asin", false, "asin trigonometry function",
                                 new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply asin") } },
                                 (c) => c.Asin
                             ),
-                            new CpuApiFunc("acos", true, "acos trigonometry function",
+                            new CpuApiFunc("acos", false, "acos trigonometry function",
                                 new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply acos") } },
                                 (c) => c.Acos
                             ),
-                            new CpuApiFunc("atan", true, "atan trigonometry function",
+                            new CpuApiFunc("atan", false, "atan trigonometry function",
                                 new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply atan") } },
                                 (c) => c.Atan
                             ),
-                            new CpuApiFunc("log", true, "logarifm",
+                            new CpuApiFunc("log", false, "logarifm",
                                 new Dictionary<string, CpuApiFunc.ArgInfo>{
                                     { "value", new CpuApiFunc.ArgInfo("float", "value to apply logarifm") },
                                     { "newBase", new CpuApiFunc.ArgInfo("float", "logarifm base") }
@@ -230,7 +230,7 @@ namespace Logic.Blocks
                     {
                         Api =  new List<CpuApiFunc>
                         {
-                            new CpuApiFunc("keys", true, "get array of object keys",
+                            new CpuApiFunc("keys", false, "get array of object keys",
                                 new Dictionary<string, CpuApiFunc.ArgInfo>{ { "obj", new CpuApiFunc.ArgInfo("object", "object to get keys") } },
                                 (c) => c.Keys
                             )

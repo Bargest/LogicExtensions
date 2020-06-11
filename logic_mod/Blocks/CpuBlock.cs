@@ -2,6 +2,7 @@
 using Logic.Script;
 using Modding;
 using Modding.Common;
+using Modding.Mapper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,39 +13,20 @@ namespace Logic.Blocks
 {
     public class CpuBlock : Modding.BlockScript
     {
-        public class ScriptText : MapperType
+        public class ScriptText : MCustom<string>
         {
-            public ScriptText(string displayName, string key) : base(displayName, key)
+            public ScriptText(string displayName, string key) : base(displayName, key, "")
             {
             }
 
-            public string LoadScript = "";
-            public string Script = "";
-            public override bool isDefaultValue => Script == "";
-
-            public override void ApplyValue()
+            public override string DeSerializeValue(XData scriptData)
             {
-                LoadScript = Script;
+                return (scriptData as XString)?.Value ?? "";
             }
 
-            public override void DeSerialize(XData scriptData)
+            public override XData SerializeValue(string value)
             {
-                Script = (scriptData as XString)?.Value ?? "";
-            }
-
-            public override XData Serialize()
-            {
-                return new XString("bmt-" + Key, Script);
-            }
-
-            public override XData SerializeDefault()
-            {
-                return new XString("bmt-" + Key, "");
-            }
-
-            public override XData SerializeLoadValue()
-            {
-                return new XString("bmt-" + Key, LoadScript);
+                return new XString("bmt-" + Key, value);
             }
         }
 
@@ -76,6 +58,7 @@ namespace Logic.Blocks
             ModContext = SingleInstance<Logic>.Instance;
             Gas = AddSlider("Gas", "gas", 100.0f, 1.0f, MaxGas);
             Script = new ScriptText("script", "script");
+            BlockBehaviour.AddCustom(Script);
             // DO NOT CALL AddPIO here, because it sends invalid machine state in multiverse after simulation start
             machineHandler = ModContext.GetMachineHandler(BlockBehaviour);
             machineHandler.AddCpuBlock(this);
@@ -107,25 +90,27 @@ namespace Logic.Blocks
 
         public void AfterEdit(MapperType mapper)
         {
-            var mapSer = mapper.Serialize();
-            if (BlockBehaviour.HasParentMachine)
-                BlockBehaviour.ParentMachine.UndoSystem.EditBlockField(BlockBehaviour.Guid, mapSer, mapSer);
+            // We cannot use undo system for PIOs, because they are dymanic
+            // trying to save them will result in exception on 'undo' while
+            // getting mapper type inside OnEditField
+            if (mapper is MCustom<string>)
+                BlockMapper.OnEditField(BlockBehaviour, mapper);
+            else
+            {
+                Player localPlayer = Player.GetLocalPlayer();
+                if (localPlayer == null || localPlayer.IsHost)
+                    return;
 
-            var tempdata = new XDataHolder();
-            BlockBehaviour.OnSave(tempdata);
+                var tempdata = new XDataHolder();
+                BlockBehaviour.OnSave(tempdata);
+                tempdata.Encode(out byte[] dataBytes);
 
-            Player localPlayer = Player.GetLocalPlayer();
-            if (localPlayer == null || localPlayer.IsHost)
-                return;
-
-            BlockMapper.OnEditField(BlockBehaviour, mapper);
-            tempdata.Encode(out byte[] dataBytes);
-
-            var message = ModContext.CpuInfoMessage.CreateMessage(
-                this.BlockBehaviour,
-                dataBytes
-            );
-            ModNetworking.SendToHost(message);
+                var message = ModContext.CpuInfoMessage.CreateMessage(
+                    this.BlockBehaviour,
+                    dataBytes
+                );
+                ModNetworking.SendToHost(message);
+            }
         }
 
         public void AfterEdit_ServerRecv(byte[] data)
@@ -183,7 +168,7 @@ namespace Logic.Blocks
             base.OnLoad(data);
 
             Script.DeSerialize(data.Read("bmt-" + Script.Key));
-            CheckScript(Script.Script);
+            CheckScript(Script.Value);
 
             var newPio = data.ReadAll().Where(x => x.Key.StartsWith("bmt-pio")).Select(x =>
             {
@@ -230,7 +215,7 @@ namespace Logic.Blocks
             var e = CheckScript(text);
             if (e != null)
                 return e;
-            Script.Script = text;
+            Script.Value = text;
             return null;
         }
 
@@ -584,7 +569,7 @@ namespace Logic.Blocks
             TriggetMode = PIO.ToDictionary(x => x.Key, x => 0);
             timeoutId = 1;
             Timeouts = new Dictionary<long, float>();
-            var func = Interp.PrepareScript(Script.Script);
+            var func = Interp.PrepareScript(Script.Value);
             Interp.SetUnhandledExceptionHandler(OnCoreException);
             Interp.SetInterruptCompleteHandler(AfterInterrupt);
 
