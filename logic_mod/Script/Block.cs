@@ -158,85 +158,6 @@ namespace Logic.Script
             return Throw(ctx, $"Can't write to {dict}[{key}]");
         }
 
-        public static bool TryGetFloat(object arg, out float value)
-        {
-            value = 0;
-            if (arg is float flev)
-            {
-                value = flev;
-                return true;
-            }
-            else if (arg is long ilev)
-            {
-                value = ilev;
-                return true;
-            }
-            else if (arg is string str)
-                return float.TryParse(str, out value);
-            return false;
-        }
-        public static bool TryGetLong(object arg, out long value)
-        {
-            value = 0;
-            if (arg is float flev)
-            {
-                value = (long)flev;
-                return true;
-            }
-            else if (arg is long ilev)
-            {
-                value = ilev;
-                return true;
-            }
-            else if (arg is string str)
-                return long.TryParse(str, out value);
-            return false;
-        }
-
-        public static object Push(VarCtx c, List<object> arr, object[] varr)
-        {
-            arr.AddRange(varr);
-            return arr.Count;
-        }
-
-        public static object Slice(VarCtx c, List<object> arr, object[] varr)
-        {
-            if (varr.Length < 1 || !TryGetLong(varr[0], out long start))
-                start = 0;
-            if (varr.Length < 2 || !TryGetLong(varr[1], out long end))
-                end = arr.Count;
-            if (start < 0)
-                start = arr.Count + start;
-            if (end < 0)
-                end = arr.Count + end;
-            if (end < start)
-                return new List<object>();
-            return arr.Skip((int)start).Take((int)(end - start)).ToList();
-        }
-
-        public static object Splice(VarCtx c, List<object> arr, object[] varr)
-        {
-            if (varr.Length < 1 || !TryGetLong(varr[0], out long lstart))
-                lstart = 0;
-            var start = (int)((lstart < 0) ? arr.Count + lstart : lstart);
-            if (start > arr.Count)
-                start = arr.Count;
-
-            if (varr.Length < 2 || !TryGetLong(varr[1], out long deleteCount) || deleteCount > arr.Count - start)
-                deleteCount = arr.Count - start;
-
-            var deleted = new List<object>();
-            while (deleteCount > 0)
-            {
-                --deleteCount;
-                deleted.Add(arr[start]);
-                arr.RemoveAt(start);
-            }
-            for (int k = 2; k < varr.Length; ++k)
-                arr.Insert(start + k - 2, varr[k]);
-            return deleted;
-        }
-
         public static object GetDictVal(VarCtx ctx, object dict, object key)
         {
             if (dict is Dictionary<string, object> d)
@@ -252,24 +173,8 @@ namespace Logic.Script
                 {
                     if (sk == "length")
                         return (long)arr.Count;
-                    if (sk == "push")
-                        return DeclareFunc(ctx, new Function
-                        {
-                            Name = "push",
-                            Native = (c, varr) => Push(c, arr, varr)
-                        });
-                    if (sk == "slice")
-                        return DeclareFunc(ctx, new Function
-                        {
-                            Name = "slice",
-                            Native = (c, varr) => Slice(c, arr, varr)
-                        });
-                    if (sk == "splice")
-                        return DeclareFunc(ctx, new Function
-                        {
-                            Name = "splice",
-                            Native = (c, varr) => Splice(c, arr, varr)
-                        });
+                    if (ctx.Interp.ArrayProto.ContainsKey(sk))
+                        return DeclareFunc(ctx, ctx.Interp.ArrayProto[sk](arr));
                 }
 
                 var akey = GetArrayKey(key);

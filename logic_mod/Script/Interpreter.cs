@@ -259,6 +259,10 @@ namespace Logic.Script
 
         }
 
+        // This dictionary contains function protos for array
+        // TODO: make normal array objects, not just lists
+        public Dictionary<string, Func<List<object>, Function>> ArrayProto = new Dictionary<string, Func<List<object>, Function>>();
+
         public void SyncDebug(object o)
         {
             PauseThread(d => Debug.Log(o), null);

@@ -62,6 +62,68 @@ namespace Logic.Blocks
             // DO NOT CALL AddPIO here, because it sends invalid machine state in multiverse after simulation start
             machineHandler = ModContext.GetMachineHandler(BlockBehaviour);
             machineHandler.AddCpuBlock(this);
+
+            // Override CPU dictionary with APIs
+            // Note: for now this is crutch, we should make normal array object instead of just list
+            Interp.ArrayProto = new Func<List<object>, Function>[]
+            {
+                arr => new Function {
+                    Name = "push",
+                    Native = (c, varr) => Push(c, arr, varr)
+                },
+                arr => new Function {
+                    Name = "slice",
+                    Native = (c, varr) => Slice(c, arr, varr)
+                },
+                arr => new Function {
+                    Name = "splice",
+                    Native = (c, varr) => Splice(c, arr, varr)
+                }
+            }.ToDictionary(x => x(null).Name);
+        }
+
+        public static object Push(VarCtx c, List<object> arr, object[] varr)
+        {
+            arr.AddRange(varr);
+            return arr.Count;
+        }
+
+        public static object Slice(VarCtx c, List<object> arr, object[] varr)
+        {
+            if (varr.Length < 1 || !BlockUtils.TryGetLong(varr[0], out long start))
+                start = 0;
+            if (varr.Length < 2 || !BlockUtils.TryGetLong(varr[1], out long end))
+                end = arr.Count;
+            if (start < 0)
+                start = arr.Count + start;
+            if (end < 0)
+                end = arr.Count + end;
+            if (end < start)
+                return new List<object>();
+            return arr.Skip((int)start).Take((int)(end - start)).ToList();
+        }
+
+        public static object Splice(VarCtx c, List<object> arr, object[] varr)
+        {
+            if (varr.Length < 1 || !BlockUtils.TryGetLong(varr[0], out long lstart))
+                lstart = 0;
+            var start = (int)((lstart < 0) ? arr.Count + lstart : lstart);
+            if (start > arr.Count)
+                start = arr.Count;
+
+            if (varr.Length < 2 || !BlockUtils.TryGetLong(varr[1], out long deleteCount) || deleteCount > arr.Count - start)
+                deleteCount = arr.Count - start;
+
+            var deleted = new List<object>();
+            while (deleteCount > 0)
+            {
+                --deleteCount;
+                deleted.Add(arr[start]);
+                arr.RemoveAt(start);
+            }
+            for (int k = 2; k < varr.Length; ++k)
+                arr.Insert(start + k - 2, varr[k]);
+            return deleted;
         }
 
         void InitRender()
@@ -235,11 +297,11 @@ namespace Logic.Blocks
 
         bool TryGetFloat(object arg, out float value)
         {
-            return Block.TryGetFloat(arg, out value);
+            return BlockUtils.TryGetFloat(arg, out value);
         }
         bool TryGetLong(object arg, out long value)
         {
-            return Block.TryGetLong(arg, out value);
+            return BlockUtils.TryGetLong(arg, out value);
         }
 
         int printCount;
@@ -345,87 +407,6 @@ namespace Logic.Blocks
                 throw new Exception("Invalid value");
             return x[0]?.ToString();
         }
-        public object Sin(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Sin(v);
-        }
-        public object Cos(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Cos(v);
-        }
-        public object Tan(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Tan(v);
-        }
-
-        public object Asin(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Asin(v);
-        }
-        public object Acos(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Acos(v);
-        }
-        public object Atan(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Atan(v);
-        }
-        public object Log(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 2 || !TryGetFloat(x[0], out float v) || !TryGetFloat(x[1], out float newBase))
-                throw new Exception("Invalid value");
-            return (float)Math.Log(v, newBase);
-        }
-
-        public object Keys(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1)
-                throw new Exception("Invalid object");
-            if (x[0] is object[] objArr)
-            {
-                var arr = new object[objArr.Length];
-                for (long i = 0; i < arr.Length; ++i)
-                    arr[i] = i;
-                return arr;
-            }
-            if (x[0] is Dictionary<string, object> dict)
-            {
-                return dict.Keys.Select(y => (object)y).ToList();
-            }
-            return new object[0];
-        }
-
-        public object Abs(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Abs(v);
-        }
-        public object Pow(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 2 || !TryGetFloat(x[0], out float v) || !TryGetFloat(x[1], out float y))
-                throw new Exception("Invalid value");
-            return (float)Math.Pow(v, y);
-        }
-        public object Sqrt(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Sqrt(v);
-        }
-
 
         public void Cli(VarCtx ctx, object[] x)
         {
@@ -573,7 +554,7 @@ namespace Logic.Blocks
             Interp.SetUnhandledExceptionHandler(OnCoreException);
             Interp.SetInterruptCompleteHandler(AfterInterrupt);
 
-            SingleInstance<CpuApi>.Instance.Attach(this, func);
+            SingleInstance<Api.CpuApi>.Instance.Attach(this, func);
             Interp.SetScript(func);
         }
 

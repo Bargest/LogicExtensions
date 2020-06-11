@@ -56,7 +56,7 @@ namespace Logic
 
             ModConsole.RegisterCommand("cpuapi", args =>
             {
-                foreach (var line in SingleInstance<CpuApi>.Instance.GetHelp())
+                foreach (var line in SingleInstance<Blocks.Api.CpuApi>.Instance.GetHelp())
                     ModConsole.Log(line);
             }, "print cpu api list");
 

@@ -8,7 +8,42 @@ namespace Logic.Blocks
      */
     public static class BlockUtils
     {
-        
+        public static bool TryGetFloat(object arg, out float value)
+        {
+            value = 0;
+            if (arg is float flev)
+            {
+                value = flev;
+                return true;
+            }
+            else if (arg is long ilev)
+            {
+                value = ilev;
+                return true;
+            }
+            else if (arg is string str)
+                return float.TryParse(str, out value);
+            return false;
+        }
+
+        public static bool TryGetLong(object arg, out long value)
+        {
+            value = 0;
+            if (arg is float flev)
+            {
+                value = (long)flev;
+                return true;
+            }
+            else if (arg is long ilev)
+            {
+                value = ilev;
+                return true;
+            }
+            else if (arg is string str)
+                return long.TryParse(str, out value);
+            return false;
+        }
+
         public static Dictionary<string, object> Quat2Dict(Quaternion q)
         {
             return new Dictionary<string, object>
