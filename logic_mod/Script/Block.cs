@@ -51,7 +51,12 @@ namespace Logic.Script
 
         public override string ToString()
         {
-            return "Exception " + Message?.ToString() + " at\n  " + string.Join("\n  ", StackTrace().Select(x => x.Func.FunctionProto.GetName() + (x.PC == null ? "" : ": " + x.PC.Source?.Pos?.ToString())).ToArray());
+            return "Exception " + Message?.ToString() + " at\n  " + string.Join("\n  ", StackTrace().Select(x => 
+                            (x.Func == null || x.Func.FunctionProto == null
+                                ? "<unknown>"
+                                : (x.Func.FunctionProto.GetName() + (x.Func.FunctionProto.Native != null ? " <native>" : ""))
+                            ) +
+                            (x.PC == null ? "" : ": " + x.PC.Source?.Pos?.ToString())).ToArray());
         }
     }
 
@@ -533,9 +538,9 @@ namespace Logic.Script
                 return Throw(ctx, $"Stack overflow exception while calling {f}");
 
             var funcVarCtx = new VarCtx(ctx, func.ParentScope, func.FunctionProto.Body);
+            funcVarCtx.Func = func;
             if (func.FunctionProto.Body != null)
             {
-                funcVarCtx.Func = func;
                 funcVarCtx.Vars["arguments"] = args ?? new object[0];
                 for (int i = 0; i < func.FunctionProto.ArgNames.Length; ++i)
                 {

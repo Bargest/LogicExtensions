@@ -82,12 +82,21 @@ namespace Logic.Blocks.Api
                 },
                 (c) => c.SetTimeout
             ),
-                new CpuApiFunc("clearTimeout", true, "cancel timeout, set by setTimeout",
+            new CpuApiFunc("clearTimeout", true, "cancel timeout, set by setTimeout",
                 new Dictionary<string, CpuApiFunc.ArgInfo>{
                     { "timeoutId", new CpuApiFunc.ArgInfo("int", "timeout id, returned by setTimeout") },
                 },
                 (c) => c.ClearTimeout
             ),
+            /*
+            // Debug!
+            new CpuApiFunc("callCallback", false, "just call specified callback (debuging stuff)",
+                new Dictionary<string, CpuApiFunc.ArgInfo>{
+                    { "callback", new CpuApiFunc.ArgInfo("func", "callback") },
+                },
+                (c) => c.CallCallback
+            ),
+            */
         };
     }
 }

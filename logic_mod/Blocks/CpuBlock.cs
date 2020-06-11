@@ -540,6 +540,11 @@ namespace Logic.Blocks
             return 1;
         }
 
+        public object CallCallback(VarCtx ctx, object[] x)
+        {
+            return Block.CallFunc(ctx, x[0], null);
+        }
+
         public override void OnSimulateStart()
         {
             printCount = 0;
