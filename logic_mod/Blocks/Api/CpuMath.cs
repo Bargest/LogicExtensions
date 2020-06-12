@@ -278,8 +278,7 @@ namespace Logic.Blocks.Api
 
                 if (curArgIndex >= l)
                     return;
-                if (!BlockUtils.TryGetBool(x[curArgIndex++], out full_output))
-                    throw new Exception("Invalid value");
+                BlockUtils.GetBool(x[curArgIndex++], out full_output);
             }
 
             Parse();
