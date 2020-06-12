@@ -87,19 +87,21 @@ namespace Logic.Blocks.Api
         {
             if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
                 throw new Exception("Invalid value");
-            return (int)Math.Ceiling(v);
+            // since int is not supported by the JS implementation, we will be
+            // using long
+            return (long)Math.Ceiling(v);
         }
         public object Floor(VarCtx ctx, object[] x)
         {
             if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
                 throw new Exception("Invalid value");
-            return (int)Math.Floor(v);
+            return (long)Math.Floor(v);
         }
         public object Round(VarCtx ctx, object[] x)
         {
             if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
                 throw new Exception("Invalid value");
-            return (int)Math.Round(v);
+            return (long)Math.Round(v);
         }
         public object Pow(VarCtx ctx, object[] x)
         {
@@ -231,58 +233,63 @@ namespace Logic.Blocks.Api
             bool full_output = false;
 
             bool x1Provided = false;
+            object[] args = new object[1];
 
-            if (l < 2 || l > 9)
+            if (l < 2)
                 throw new Exception("Invalid value");
 
             // Conditionally initialize the arguments
-            int curArgIndex = 0;
+            void Parse()
+            {
+                int curArgIndex = 0;
 
-            func = x[curArgIndex++];
+                func = x[curArgIndex++];
 
-            if (!BlockUtils.TryGetFloat(x[curArgIndex++], out x0))
-                throw new Exception("Invalid value");
+                if (!BlockUtils.TryGetFloat(x[curArgIndex++], out x0))
+                    throw new Exception("Invalid value");
 
-            if (curArgIndex >= l)
-                goto finishInitialization;
-            fprime = x[curArgIndex++];
+                if (curArgIndex >= l)
+                    return;
+                fprime = x[curArgIndex++];
 
-            if (curArgIndex >= l)
-                goto finishInitialization;
-            if (!BlockUtils.TryGetFloat(x[curArgIndex++], out tol))
-                throw new Exception("Invalid value");
+                if (curArgIndex >= l)
+                    return;
+                if (!BlockUtils.TryGetFloat(x[curArgIndex++], out tol))
+                    throw new Exception("Invalid value");
 
-            if (curArgIndex >= l)
-                goto finishInitialization;
-            if (!BlockUtils.TryGetLong(x[curArgIndex++], out maxiter))
-                throw new Exception("Invalid value");
+                if (curArgIndex >= l)
+                    return;
+                if (!BlockUtils.TryGetLong(x[curArgIndex++], out maxiter))
+                    throw new Exception("Invalid value");
 
-            if (curArgIndex >= l)
-                goto finishInitialization;
-            fprime2 = x[curArgIndex++];
+                if (curArgIndex >= l)
+                    return;
+                fprime2 = x[curArgIndex++];
 
 
-            if (curArgIndex >= l)
-                goto finishInitialization;
-            x1Provided = BlockUtils.TryGetFloat(x[curArgIndex++], out x1);
+                if (curArgIndex >= l)
+                    return;
+                x1Provided = BlockUtils.TryGetFloat(x[curArgIndex++], out x1);
 
-            if (curArgIndex >= l)
-                goto finishInitialization;
-            if (!BlockUtils.TryGetFloat(x[curArgIndex++], out rtol))
-                throw new Exception("Invalid value");
+                if (curArgIndex >= l)
+                    return;
+                if (!BlockUtils.TryGetFloat(x[curArgIndex++], out rtol))
+                    throw new Exception("Invalid value");
 
-            if (curArgIndex >= l)
-                goto finishInitialization;
-            if (!BlockUtils.TryGetBool(x[curArgIndex++], out full_output))
-                throw new Exception("Invalid value");
+                if (curArgIndex >= l)
+                    return;
+                if (!BlockUtils.TryGetBool(x[curArgIndex++], out full_output))
+                    throw new Exception("Invalid value");
+            }
 
-            finishInitialization:
+            Parse();
+
             if (tol <= 0)
                 throw new Exception("tol too small (" + tol + " <= 0)");
             if (maxiter < 1)
                 throw new Exception("maxiter must be greater than 0");
             float p0 = x0;
-            int itr = 0;
+            long itr = 0;
             float p = 0;
             if (fprime is FuncCtx)
             {
@@ -290,11 +297,12 @@ namespace Logic.Blocks.Api
                 for (; itr < maxiter; ++itr)
                 {
                     // first evaluate fval
-                    float fval = (float)Block.CallFunc(ctx, func, new object[] { p0 });
+                    args[0] = p0;
+                    float fval = (float)Block.CallFunc(ctx, func, args);
                     // if fval is 0, a root has been found, then terminate
                     if (fval == 0)
                         return _newton_result_select(full_output, p0, itr, converged: true);
-                    float fder = (float)Block.CallFunc(ctx, fprime, new object[] { p0 });
+                    float fder = (float)Block.CallFunc(ctx, fprime, args);
                     // stop iterating if the derivative is zero
                     if (fder == 0)
                         return _newton_result_select(full_output, p0, itr + 1, converged: false);
@@ -303,7 +311,7 @@ namespace Logic.Blocks.Api
                     float newton_step = fval / fder;
                     if (fprime2 is FuncCtx)
                     {
-                        float fder2 = (float)Block.CallFunc(ctx, fprime2, new object[] { p0 });
+                        float fder2 = (float)Block.CallFunc(ctx, fprime2, args);
                         // Halley's method:
                         // newton_step /= (1.0 - 0.5 * newton_step * fder2 / fder)
                         // Only do it if denominator stays close enough to 1
@@ -336,8 +344,10 @@ namespace Logic.Blocks.Api
                     p1 = x0 * (1 + eps);
                     p1 += (p1 >= 0 ? eps : -eps);
                 }
-                q0 = (float)Block.CallFunc(ctx, func, new object[] { p0 });
-                q1 = (float)Block.CallFunc(ctx, func, new object[] { p1 });
+                args[0] = p0;
+                q0 = (float)Block.CallFunc(ctx, func, args);
+                args[0] = p1;
+                q1 = (float)Block.CallFunc(ctx, func, args);
                 if (Math.Abs(q1) < Math.Abs(q0))
                 {
                     float temp = q1;
@@ -373,14 +383,15 @@ namespace Logic.Blocks.Api
                     p0 = p1;
                     q0 = q1;
                     p1 = p;
-                    q1 = (float)Block.CallFunc(ctx, func, new object[] { p1 });
+                    args[0] = p1;
+                    q1 = (float)Block.CallFunc(ctx, func, args);
                 }
             }
             return _newton_result_select(full_output, p, itr + 1, converged: false);
         }
 
         private object _newton_result_select(bool full_output, float p0,
-            int itr, bool converged)
+            long itr, bool converged)
         {
             if (full_output)
             {
