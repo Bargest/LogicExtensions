@@ -46,18 +46,17 @@ namespace Logic.Blocks
         }
 
         // Anything can be cast to a bool, so no need to "try" here.
-        public static void GetBool(object arg, out bool value)
+        public static bool GetBool(object arg)
         {
             if (arg is bool b)
-                value = b;
-            else if (arg is long i)
-                value = i != 0;
-            else if (arg is float f)
-                value = f != 0;
-            else if (arg == Block.Undefined)
-                value = false;
-            else
-                value = arg != null;
+                return b;
+            if (arg is long i)
+                return i != 0;
+            if (arg is float f)
+                return f != 0;
+            if (arg == Block.Undefined)
+                return false;
+            return arg != null;
         }
 
         public static Dictionary<string, object> Quat2Dict(Quaternion q)

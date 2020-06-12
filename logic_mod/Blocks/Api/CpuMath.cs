@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Logic.Blocks.Api
 {
-    public class CpuMath : ApiNamespace
+    public class CpuMath : ApiList
     {
         public override List<CpuApiFunc> Api => new List<CpuApiFunc>
         {
@@ -72,7 +72,17 @@ namespace Logic.Blocks.Api
                 (c) => Exp
             ),
             new CpuApiFunc("newton", false, "numerical solver",
-                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply atan") } },
+                new Dictionary<string, CpuApiFunc.ArgInfo>{
+                    { "func", new CpuApiFunc.ArgInfo("func", "The function whose zero is wanted. It must be a function of a single variable") },
+                    { "x0", new CpuApiFunc.ArgInfo("float", "An initial estimate of the zero that should be somewhere near the actual zero.") },
+                    { "fprime", new CpuApiFunc.ArgInfo("func", "(optional) The derivative of the function when available.") },
+                    { "tol", new CpuApiFunc.ArgInfo("float", "(optional) The allowable error of the zero value.") },
+                    { "maxiter", new CpuApiFunc.ArgInfo("int", "(optional) Maximum number of iterations.") },
+                    { "fprime2", new CpuApiFunc.ArgInfo("func", "(optional) The second order derivative of the function when available.") },
+                    { "x1", new CpuApiFunc.ArgInfo("float", "(optional) Estimate of the zero. Used if `fprime` is not provided.") },
+                    { "rtol", new CpuApiFunc.ArgInfo("flot", "(optional) Tolerance (relative) for termination.") },
+                    { "full_output", new CpuApiFunc.ArgInfo("bool", "(optional) Return just value (false) or object description (true).") }
+                },
                 (c) => Newton
             ),
         };
@@ -266,7 +276,6 @@ namespace Logic.Blocks.Api
                     return;
                 fprime2 = x[curArgIndex++];
 
-
                 if (curArgIndex >= l)
                     return;
                 x1Provided = BlockUtils.TryGetFloat(x[curArgIndex++], out x1);
@@ -278,7 +287,7 @@ namespace Logic.Blocks.Api
 
                 if (curArgIndex >= l)
                     return;
-                BlockUtils.GetBool(x[curArgIndex++], out full_output);
+                full_output = BlockUtils.GetBool(x[curArgIndex++]);
             }
 
             Parse();

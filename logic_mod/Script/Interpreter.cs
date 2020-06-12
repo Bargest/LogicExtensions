@@ -442,7 +442,7 @@ namespace Logic.Script
                     else
                         Result = null;
                 }
-                catch (TerminationException te)
+                catch (TerminationException)
                 {
                     // Exited
                     Terminate = true;

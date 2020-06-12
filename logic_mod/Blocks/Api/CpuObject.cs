@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Logic.Blocks.Api
 {
-    public class CpuObject : ApiNamespace
+    public class CpuObject : ApiList
     {
         public override List<CpuApiFunc> Api => new List<CpuApiFunc>
         {

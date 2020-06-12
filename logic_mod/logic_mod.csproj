@@ -57,6 +57,8 @@
     <Compile Include="BlockScripts\FlyingScript.cs" />
     <Compile Include="BlockScripts\PistonScript.cs" />
     <Compile Include="BlockScripts\SteeringScript.cs" />
+    <Compile Include="Blocks\Api\ApiList.cs" />
+    <Compile Include="Blocks\Api\CpuApiFunc.cs" />
     <Compile Include="Blocks\Api\CpuMath.cs" />
     <Compile Include="Blocks\Api\CpuObject.cs" />
     <Compile Include="Blocks\Api\CpuRoot.cs" />

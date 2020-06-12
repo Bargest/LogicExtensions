@@ -333,7 +333,7 @@ namespace Logic
             }
             catch (Exception e)
             {
-                Debug.LogWarning("Load console font failed");
+                Debug.LogWarning("Load console font failed: " + e);
             }
         }
 
