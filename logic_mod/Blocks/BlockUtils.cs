@@ -44,6 +44,17 @@ namespace Logic.Blocks
             return false;
         }
 
+        public static bool TryGetBool(object arg, out bool value)
+        {
+            value = false;
+            if (arg is long ilev)
+            {
+                value = ilev != 0;
+                return true;
+            }
+            return false;
+        }
+
         public static Dictionary<string, object> Quat2Dict(Quaternion q)
         {
             return new Dictionary<string, object>
