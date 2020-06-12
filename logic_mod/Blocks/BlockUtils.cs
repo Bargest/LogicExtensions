@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Logic.Script;
 namespace Logic.Blocks
 {
     /* 
@@ -42,6 +43,21 @@ namespace Logic.Blocks
             else if (arg is string str)
                 return long.TryParse(str, out value);
             return false;
+        }
+
+        // Anything can be cast to a bool, so no need to "try" here.
+        public static void GetBool(object arg, out bool value)
+        {
+            if (arg is bool b)
+                value = b;
+            else if (arg is long i)
+                value = i != 0;
+            else if (arg is float f)
+                value = f != 0;
+            else if (arg == Block.Undefined)
+                value = false;
+            else
+                value = arg != null;
         }
 
         public static Dictionary<string, object> Quat2Dict(Quaternion q)
