@@ -31,9 +31,15 @@ namespace Logic.Blocks.Api
 
             var apiDict = apiList.Api.ToDictionary(x => x.Name);
             if (!ApiNamespaces.ContainsKey(nsp))
+            {
                 ApiNamespaces[nsp] = new Dictionary<string, CpuApiFunc>();
-            else if (ApiNamespaces[nsp].Keys.Any(x => apiDict.ContainsKey(x)))
-                throw new Exception($"Failed adding functions to {nsp}: duplicate names found!");
+            }
+            else
+            {
+                var dupKey = ApiNamespaces[nsp].Keys.Where(x => apiDict.ContainsKey(x)).FirstOrDefault();
+                if (dupKey != null)
+                    throw new Exception($"Failed adding functions to {nsp}: duplicate name {dupKey} found!");
+            }
 
             foreach (var api in apiDict)
                 ApiNamespaces[nsp].Add(api.Key, api.Value);
