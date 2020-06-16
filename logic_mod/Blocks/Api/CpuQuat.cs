@@ -14,7 +14,7 @@ namespace Logic.Blocks.Api
             new CpuApiFunc("mul", false, "multiply quaternion",
                 new Dictionary<string, CpuApiFunc.ArgInfo>{
                     { "a", new CpuApiFunc.ArgInfo("quaternion", "quaternion to multiply") },
-                    { "b", new CpuApiFunc.ArgInfo("quaternion or vector", "quaternion or vector to multiply") }
+                    { "b", new CpuApiFunc.ArgInfo("quaternion", "quaternion or vector to multiply") }
                 },
                 (c) => QuatMult
             ),
