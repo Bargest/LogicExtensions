@@ -59,6 +59,59 @@ namespace Logic.Blocks
             return arg != null;
         }
 
+        /// <summary>
+        /// Tries to get a quaternion from an object.
+        /// </summary>
+        /// <returns>
+        /// true if the object is a dictionary and has fields x, y, z, w that can
+        /// be cast to float
+        /// </returns>
+        public static bool TryGetQuat(object arg, out Quaternion value)
+        {
+            value = Quaternion.identity;
+            if (!(arg is Dictionary<string, object> d))
+                return false;
+            else
+            {
+                object ow, ox, oy, oz;
+                if (!d.TryGetValue("w", out ow) || !d.TryGetValue("x", out ox)
+                    || !d.TryGetValue("y", out oy) || !d.TryGetValue("z", out oz))
+                    return false;
+                float w, x, y, z;
+                if (!TryGetFloat(ow, out w) || !TryGetFloat(ox, out x)
+                    || !TryGetFloat(oy, out y) || !TryGetFloat(oz, out z))
+                    return false;
+                value = new Quaternion(x, y, z, w);
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Tries to get a vector3 from an object.
+        /// </summary>
+        /// <returns>
+        /// true if the object is a dictionary and has fields x, y, z that can
+        /// be cast to float
+        /// </returns>
+        public static bool TryGetVec3(object arg, out Vector3 value)
+        {
+            value = Vector3.zero;
+            if (!(arg is Dictionary<string, object> d))
+                return false;
+            else
+            {
+                object ox, oy, oz;
+                if (!d.TryGetValue("x", out ox) || !d.TryGetValue("y", out oy)
+                    || !d.TryGetValue("z", out oz))
+                    return false;
+                float x, y, z;
+                if (!TryGetFloat(ox, out x) || !TryGetFloat(oy, out y) || !TryGetFloat(oz, out z))
+                    return false;
+                value = new Vector3(x, y, z);
+                return true;
+            }
+        }
+
         public static Dictionary<string, object> Quat2Dict(Quaternion q)
         {
             return new Dictionary<string, object>

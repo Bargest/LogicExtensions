@@ -56,6 +56,7 @@ namespace Logic.Blocks.Api
             RootApi = new CpuRoot().Api.ToDictionary(x => x.Name);
             AddNamespace("Math", new CpuMath());
             AddNamespace("Object", new CpuObject());
+            AddNamespace("Quaternion", new CpuQuat());
         }
 
     }
