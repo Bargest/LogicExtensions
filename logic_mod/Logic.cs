@@ -17,6 +17,7 @@ using Logic.Blocks;
 using Logic.Script;
 using System.Text.RegularExpressions;
 using Logic.BlockScripts;
+using Jint.Native;
 
 namespace Logic
 {
@@ -47,10 +48,18 @@ namespace Logic
 
             ModConsole.RegisterCommand("script", args => {
                 var text = string.Join(" ", args);
-                var func = logic.PrepareScript(text);
-                logic.AddExtFunc(func, "log", (ctx, x) => { ModConsole.Log(x[0]?.ToString()); return null; }, true);
-                logic.SetScript(func);
-                var res = logic.ContinueScript(1000);
+                //var func = logic.PrepareScript(text);
+                //logic.AddExtFunc(func, "print", (ctx, x) => { ModConsole.Log(x[0]?.ToString()); return null; }, true);
+                //logic.SetScript(func);
+                //var res = logic.ContinueScript(1000);
+                Func<JsValue, JsValue[], JsValue> printCb = (thiz, x) => {
+                    ModConsole.Log(x[0]?.ToObject().ToString());
+                    return x[0];
+                };
+                var engine = new Jint.Engine();
+                //new Jint.Runtime.Interop.DelegateWrapper(engine, printCb).Call(null, new JsValue[] { "hello" });
+                engine.SetValue("print", printCb);
+                var res = engine.Execute(text).GetCompletionValue();
                 ModConsole.Log(res?.ToString());
             }, "exec script");
 

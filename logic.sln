@@ -1,8 +1,12 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2036
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30204.135
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "logic_mod", "logic_mod\logic_mod.csproj", "{556228A3-C90B-4FBB-87BB-23B870B86CAE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jint", "Jint\Jint.csproj", "{656099F6-CB00-4A31-8EE2-6AA90EA852CC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eprisma", "Eprisma\Eprisma.csproj", "{E25B1679-4860-4027-93C9-8DD2F4A564B9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,6 +18,14 @@ Global
 		{556228A3-C90B-4FBB-87BB-23B870B86CAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{556228A3-C90B-4FBB-87BB-23B870B86CAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{556228A3-C90B-4FBB-87BB-23B870B86CAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{656099F6-CB00-4A31-8EE2-6AA90EA852CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{656099F6-CB00-4A31-8EE2-6AA90EA852CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{656099F6-CB00-4A31-8EE2-6AA90EA852CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{656099F6-CB00-4A31-8EE2-6AA90EA852CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E25B1679-4860-4027-93C9-8DD2F4A564B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E25B1679-4860-4027-93C9-8DD2F4A564B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E25B1679-4860-4027-93C9-8DD2F4A564B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E25B1679-4860-4027-93C9-8DD2F4A564B9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

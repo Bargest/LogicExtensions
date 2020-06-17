@@ -38,6 +38,9 @@
     <Reference Include="DynamicText">
       <HintPath>$(BESIEGE_GAME_ASSEMBLIES)DynamicText.dll</HintPath>
     </Reference>
+    <Reference Include="Jint">
+      <HintPath>..\Jint\bin\Debug\Jint.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -84,8 +87,16 @@
     <Compile Include="Logic.cs" />
     <Compile Include="Script\VarCtx.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Eprisma\Eprisma.csproj">
+      <Project>{E25B1679-4860-4027-93C9-8DD2F4A564B9}</Project>
+      <Name>Eprisma</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\logic_mod\$(TargetFileName)"</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\logic_mod\$(TargetFileName)"
+copy "$(TargetDir)Jint.dll" "$(ProjectDir)..\..\logic_mod\Jint.dll"
+copy "$(TargetDir)Eprisma.dll" "$(ProjectDir)..\..\logic_mod\Eprisma.dll"</PostBuildEvent>
   </PropertyGroup>
 </Project>
