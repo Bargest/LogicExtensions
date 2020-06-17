@@ -1,0 +1,263 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{656099F6-CB00-4A31-8EE2-6AA90EA852CC}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Jint</RootNamespace>
+    <AssemblyName>Jint</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Eprisma">
+      <HintPath>..\Eprisma\bin\Debug\Eprisma.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfoExtras.cs" />
+    <Compile Include="Collections\DictionarySlim.cs" />
+    <Compile Include="Collections\HybridDictionary.cs" />
+    <Compile Include="Collections\ListDictionary.cs" />
+    <Compile Include="Collections\PropertyDictionary.cs" />
+    <Compile Include="Collections\StringDictionarySlim.cs" />
+    <Compile Include="Collections\SymbolDictionary.cs" />
+    <Compile Include="Constraints\CancellationConstraint.cs" />
+    <Compile Include="Constraints\ConstraintsOptionsExtensions.cs" />
+    <Compile Include="Constraints\MaxStatements.cs" />
+    <Compile Include="Constraints\MemoryLimit.cs" />
+    <Compile Include="Constraints\TimeConstraint.cs" />
+    <Compile Include="Constraints\TimeConstraint2.cs" />
+    <Compile Include="DeclarationBindingType.cs" />
+    <Compile Include="Engine.cs" />
+    <Compile Include="EsprimaExtensions.cs" />
+    <Compile Include="Extensions\JavascriptExtensions.cs" />
+    <Compile Include="Extensions\ReflectionExtensions.cs" />
+    <Compile Include="HoistingScope.cs" />
+    <Compile Include="IConstraint.cs" />
+    <Compile Include="JsValueExtensions.cs" />
+    <Compile Include="Key.cs" />
+    <Compile Include="Native\Argument\ArgumentsInstance.cs" />
+    <Compile Include="Native\Array\ArrayConstructor.cs" />
+    <Compile Include="Native\Array\ArrayInstance.cs" />
+    <Compile Include="Native\Array\ArrayOperations.cs" />
+    <Compile Include="Native\Array\ArrayPrototype.cs" />
+    <Compile Include="Native\Boolean\BooleanConstructor.cs" />
+    <Compile Include="Native\Boolean\BooleanInstance.cs" />
+    <Compile Include="Native\Boolean\BooleanPrototype.cs" />
+    <Compile Include="Native\Date\DateConstructor.cs" />
+    <Compile Include="Native\Date\DateInstance.cs" />
+    <Compile Include="Native\Date\DatePrototype.cs" />
+    <Compile Include="Native\Error\ErrorConstructor.cs" />
+    <Compile Include="Native\Error\ErrorInstance.cs" />
+    <Compile Include="Native\Error\ErrorPrototype.cs" />
+    <Compile Include="Native\Function\ArrowFunctionInstance.cs" />
+    <Compile Include="Native\Function\BindFunctionInstance.cs" />
+    <Compile Include="Native\Function\EvalFunctionInstance.cs" />
+    <Compile Include="Native\Function\FunctionConstructor.cs" />
+    <Compile Include="Native\Function\FunctionInstance.cs" />
+    <Compile Include="Native\Function\FunctionPrototype.cs" />
+    <Compile Include="Native\Function\ScriptFunctionInstance.cs" />
+    <Compile Include="Native\Function\ThrowTypeError.cs" />
+    <Compile Include="Native\Global\GlobalObject.cs" />
+    <Compile Include="Native\ICallable.cs" />
+    <Compile Include="Native\IConstructor.cs" />
+    <Compile Include="Native\IPrimitiveInstance.cs" />
+    <Compile Include="Native\Iterator\IIterator.cs" />
+    <Compile Include="Native\Iterator\IteratorConstructor.cs" />
+    <Compile Include="Native\Iterator\IteratorInstance.cs" />
+    <Compile Include="Native\Iterator\IteratorProtocol.cs" />
+    <Compile Include="Native\Iterator\IteratorPrototype.cs" />
+    <Compile Include="Native\JsBoolean.cs" />
+    <Compile Include="Native\JsNull.cs" />
+    <Compile Include="Native\JsNumber.cs" />
+    <Compile Include="Native\Json\JsonInstance.cs" />
+    <Compile Include="Native\Json\JsonParser.cs" />
+    <Compile Include="Native\Json\JsonSerializer.cs" />
+    <Compile Include="Native\JsString.cs" />
+    <Compile Include="Native\JsSymbol.cs" />
+    <Compile Include="Native\JsUndefined.cs" />
+    <Compile Include="Native\JsValue.cs" />
+    <Compile Include="Native\Map\MapConstructor.cs" />
+    <Compile Include="Native\Map\MapInstance.cs" />
+    <Compile Include="Native\Map\MapPrototype.cs" />
+    <Compile Include="Native\Math\MathInstance.cs" />
+    <Compile Include="Native\Null.cs" />
+    <Compile Include="Native\Number\Dtoa\Bignum.cs" />
+    <Compile Include="Native\Number\Dtoa\BignumDtoa.cs" />
+    <Compile Include="Native\Number\Dtoa\CachePowers.cs" />
+    <Compile Include="Native\Number\Dtoa\DiyFp.cs" />
+    <Compile Include="Native\Number\Dtoa\DoubleHelper.cs" />
+    <Compile Include="Native\Number\Dtoa\DtoaBuilder.cs" />
+    <Compile Include="Native\Number\Dtoa\DtoaMode.cs" />
+    <Compile Include="Native\Number\Dtoa\DtoaNumberFormatter.cs" />
+    <Compile Include="Native\Number\Dtoa\FastDtoa.cs" />
+    <Compile Include="Native\Number\Dtoa\NumberExtensions.cs" />
+    <Compile Include="Native\Number\NumberConstructor.cs" />
+    <Compile Include="Native\Number\NumberInstance.cs" />
+    <Compile Include="Native\Number\NumberPrototype.cs" />
+    <Compile Include="Native\Object\ObjectClass.cs" />
+    <Compile Include="Native\Object\ObjectConstructor.cs" />
+    <Compile Include="Native\Object\ObjectInstance.cs" />
+    <Compile Include="Native\Object\ObjectPrototype.cs" />
+    <Compile Include="Native\Proxy\ProxyConstructor.cs" />
+    <Compile Include="Native\Proxy\ProxyInstance.cs" />
+    <Compile Include="Native\Reflect\ReflectInstance.cs" />
+    <Compile Include="Native\RegExp\RegExpConstructor.cs" />
+    <Compile Include="Native\RegExp\RegExpExtensions.cs" />
+    <Compile Include="Native\RegExp\RegExpInstance.cs" />
+    <Compile Include="Native\RegExp\RegExpPrototype.cs" />
+    <Compile Include="Native\Set\SetConstructor.cs" />
+    <Compile Include="Native\Set\SetInstance.cs" />
+    <Compile Include="Native\Set\SetPrototype.cs" />
+    <Compile Include="Native\String\StringConstructor.cs" />
+    <Compile Include="Native\String\StringExecutionContext.cs" />
+    <Compile Include="Native\String\StringInstance.cs" />
+    <Compile Include="Native\String\StringPrototype.cs" />
+    <Compile Include="Native\Symbol\GlobalSymbolRegistry.cs" />
+    <Compile Include="Native\Symbol\SymbolConstructor.cs" />
+    <Compile Include="Native\Symbol\SymbolInstance.cs" />
+    <Compile Include="Native\Symbol\SymbolPrototype.cs" />
+    <Compile Include="Native\Undefined.cs" />
+    <Compile Include="Options.cs" />
+    <Compile Include="Pooling\ArgumentsInstancePool.cs" />
+    <Compile Include="Pooling\ConcurrentObjectPool.cs" />
+    <Compile Include="Pooling\JsValueArrayPool.cs" />
+    <Compile Include="Pooling\ObjectPool.cs" />
+    <Compile Include="Pooling\ReferencePool.cs" />
+    <Compile Include="Pooling\StringBuilderPool.cs" />
+    <Compile Include="Runtime\Arguments.cs" />
+    <Compile Include="Runtime\CallStack\CallStackElement.cs" />
+    <Compile Include="Runtime\CallStack\CallStackElementComparer.cs" />
+    <Compile Include="Runtime\CallStack\JintCallStack.cs" />
+    <Compile Include="Runtime\CommonProperties.cs" />
+    <Compile Include="Runtime\Completion.cs" />
+    <Compile Include="Runtime\Debugger\BreakPoint.cs" />
+    <Compile Include="Runtime\Debugger\DebugHandler.cs" />
+    <Compile Include="Runtime\Debugger\DebugInformation.cs" />
+    <Compile Include="Runtime\Debugger\StepMode.cs" />
+    <Compile Include="Runtime\Descriptors\PropertyDescriptor.cs" />
+    <Compile Include="Runtime\Descriptors\PropertyFlag.cs" />
+    <Compile Include="Runtime\Descriptors\Specialized\ClrAccessDescriptor.cs" />
+    <Compile Include="Runtime\Descriptors\Specialized\FieldInfoDescriptor.cs" />
+    <Compile Include="Runtime\Descriptors\Specialized\GetSetPropertyDescriptor.cs" />
+    <Compile Include="Runtime\Descriptors\Specialized\IndexDescriptor.cs" />
+    <Compile Include="Runtime\Descriptors\Specialized\LazyPropertyDescriptor.cs" />
+    <Compile Include="Runtime\Descriptors\Specialized\PropertyInfoDescriptor.cs" />
+    <Compile Include="Runtime\Environments\Binding.cs" />
+    <Compile Include="Runtime\Environments\DeclarativeEnvironmentRecord.cs" />
+    <Compile Include="Runtime\Environments\EnvironmentRecord.cs" />
+    <Compile Include="Runtime\Environments\ExecutionContext.cs" />
+    <Compile Include="Runtime\Environments\FunctionEnvironmentRecord.cs" />
+    <Compile Include="Runtime\Environments\GlobalEnvironmentRecord.cs" />
+    <Compile Include="Runtime\Environments\LexicalEnvironment.cs" />
+    <Compile Include="Runtime\Environments\ObjectEnvironmentRecord.cs" />
+    <Compile Include="Runtime\ExceptionHelper.cs" />
+    <Compile Include="Runtime\Interop\ClrFunctionInstance.cs" />
+    <Compile Include="Runtime\Interop\DefaultTypeConverter.cs" />
+    <Compile Include="Runtime\Interop\DelegateWrapper.cs" />
+    <Compile Include="Runtime\Interop\GetterFunctionInstance.cs" />
+    <Compile Include="Runtime\Interop\IObjectConverter.cs" />
+    <Compile Include="Runtime\Interop\IObjectWrapper.cs" />
+    <Compile Include="Runtime\Interop\IReferenceResolver.cs" />
+    <Compile Include="Runtime\Interop\ITypeConverter.cs" />
+    <Compile Include="Runtime\Interop\MethodInfoFunctionInstance.cs" />
+    <Compile Include="Runtime\Interop\NamespaceReference.cs" />
+    <Compile Include="Runtime\Interop\ObjectWrapper.cs" />
+    <Compile Include="Runtime\Interop\SetterFunctionInstance.cs" />
+    <Compile Include="Runtime\Interop\TypeReference.cs" />
+    <Compile Include="Runtime\Interop\TypeReferencePrototype.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\BindingPatternAssignmentExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintArrayExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintArrowFunctionExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintAssignmentExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintBinaryExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintCallExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintConditionalExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintConstantExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintFunctionExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintIdentifierExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintLiteralExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintLogicalAndExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintLogicalOrExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintMemberExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintNewExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintObjectExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintSequenceExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintSpreadExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintTaggedTemplateExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintTemplateLiteralExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintThisExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintUnaryExpression.cs" />
+    <Compile Include="Runtime\Interpreter\Expressions\JintUpdateExpression.cs" />
+    <Compile Include="Runtime\Interpreter\JintFunctionDefinition.cs" />
+    <Compile Include="Runtime\Interpreter\JintStatementList.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintBlockStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintBreakStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintContinueStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintDebuggerStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintDoWhileStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintEmptyStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintExpressionStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintForInForOfStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintForStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintFunctionDeclarationStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintIfStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintLabeledStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintReturnStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintScript.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintSwitchBlock.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintSwitchStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintThrowStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintTryStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintVariableDeclaration.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintWhileStatement.cs" />
+    <Compile Include="Runtime\Interpreter\Statements\JintWithStatement.cs" />
+    <Compile Include="Runtime\JavaScriptException.cs" />
+    <Compile Include="Runtime\JintException.cs" />
+    <Compile Include="Runtime\KnownKeys.cs" />
+    <Compile Include="Runtime\MemoryLimitExceededException.cs" />
+    <Compile Include="Runtime\OrderedDictionary.cs" />
+    <Compile Include="Runtime\OrderedSet.cs" />
+    <Compile Include="Runtime\RangeErrorException.cs" />
+    <Compile Include="Runtime\RecursionDepthOverflowException.cs" />
+    <Compile Include="Runtime\References\Reference.cs" />
+    <Compile Include="Runtime\RefStack.cs" />
+    <Compile Include="Runtime\StatementsCountOverflowException.cs" />
+    <Compile Include="Runtime\TypeConverter.cs" />
+    <Compile Include="Runtime\TypeErrorException.cs" />
+    <Compile Include="StrictModeScope.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
