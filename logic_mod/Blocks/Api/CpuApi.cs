@@ -1,4 +1,7 @@
-﻿using Logic.Script;
+﻿using Jint.Native;
+using Jint.Native.Object;
+using Jint.Runtime.Interop;
+using Logic.Script;
 using Modding;
 using System;
 using System.Collections.Generic;
@@ -15,13 +18,23 @@ namespace Logic.Blocks.Api
 
         public override string Name => "CpuApi";
 
-        public void Attach(CpuBlock block, FuncCtx ctx)
+        public void Attach(CpuBlock block)
         {
             foreach (var api in RootApi)
-                block.Interp.AddExtFunc(ctx, api.Key, api.Value.ImplementationFactory(block), api.Value.Sync);
+                block.Interp.SetValue(api.Key, api.Value.ImplementationFactory(block));
 
             foreach (var kp in ApiNamespaces)
-                block.Interp.AddExtVariable(ctx, kp.Key, kp.Value.ToDictionary(x => x.Key, x => (object)block.Interp.CreateFunc(ctx, x.Value.Name, x.Value.ImplementationFactory(block), x.Value.Sync)));
+            {
+                var obj = block.Interp.Global.Get(kp.Key) as ObjectInstance;
+                if (obj == null)
+                {
+                    obj = new ObjectInstance(block.Interp);
+                    block.Interp.Global.Set(kp.Key, obj);
+                }
+                foreach (var f in kp.Value)
+                    obj.FastAddProperty(f.Key, new DelegateWrapper(block.Interp, f.Value.ImplementationFactory(block)), true, false, true);
+            }
+            // block.Interp.AddExtVariable(ctx, kp.Key, kp.Value.ToDictionary(x => x.Key, x => (object)block.Interp.CreateFunc(ctx, x.Value.Name, x.Value.ImplementationFactory(block), x.Value.Sync)));
         }
 
         public void AddNamespace(string nsp, ApiList apiList)
@@ -55,7 +68,7 @@ namespace Logic.Blocks.Api
         {
             RootApi = new CpuRoot().Api.ToDictionary(x => x.Name);
             AddNamespace("Math", new CpuMath());
-            AddNamespace("Object", new CpuObject());
+            //AddNamespace("Object", new CpuObject());
         }
 
     }

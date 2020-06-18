@@ -6,10 +6,12 @@ using System.Text;
 
 namespace Logic.Blocks.Api
 {
+    /*
     public class CpuObject : ApiList
     {
         public override List<CpuApiFunc> Api => new List<CpuApiFunc>
         {
+            
             new CpuApiFunc("keys", false, "get array of object keys",
                 new Dictionary<string, CpuApiFunc.ArgInfo>{ { "obj", new CpuApiFunc.ArgInfo("object", "object to get keys") } },
                 (c) => Keys
@@ -33,5 +35,5 @@ namespace Logic.Blocks.Api
             }
             return new object[0];
         }
-    }
+    }*/
 }

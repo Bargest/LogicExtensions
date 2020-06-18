@@ -12,6 +12,8 @@ namespace Jint.Runtime.CallStack
         private readonly Dictionary<CallStackElement, int> _statistics =
             new Dictionary<CallStackElement, int>(new CallStackElementComparer());
 
+        public int Count => _stack.Count;
+
         public int Push(CallStackElement item)
         {
             _stack.Push(item);
@@ -54,7 +56,7 @@ namespace Jint.Runtime.CallStack
 
         public override string ToString()
         {
-            return string.Join("->", _stack.Select(cse => cse.ToString()).Reverse().ToArray());
+            return string.Join("->", _stack.Select(cse => cse.ToString()).Reverse().Take(10).ToArray());
         }
 
         IEnumerator IEnumerable.GetEnumerator()

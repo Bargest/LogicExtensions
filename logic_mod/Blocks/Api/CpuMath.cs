@@ -1,4 +1,8 @@
-﻿using Logic.Script;
+﻿using Jint;
+using Jint.Native;
+using Jint.Native.Function;
+using Jint.Runtime;
+using Logic.Script;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +13,7 @@ namespace Logic.Blocks.Api
     public class CpuMath : ApiList
     {
         public override List<CpuApiFunc> Api => new List<CpuApiFunc>
-        {
+        {/*
             new CpuApiFunc("abs", false, "absolute value",
                 new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply abs") } },
                 (c) => Abs
@@ -70,7 +74,7 @@ namespace Logic.Blocks.Api
             new CpuApiFunc("exp", false, "exponential",
                 new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply exp") } },
                 (c) => Exp
-            ),
+            ),*/
             new CpuApiFunc("newton", false, "numerical solver",
                 new Dictionary<string, CpuApiFunc.ArgInfo>{
                     { "func", new CpuApiFunc.ArgInfo("func", "The function whose zero is wanted. It must be a function of a single variable") },
@@ -83,10 +87,10 @@ namespace Logic.Blocks.Api
                     { "rtol", new CpuApiFunc.ArgInfo("flot", "(optional) Tolerance (relative) for termination.") },
                     { "full_output", new CpuApiFunc.ArgInfo("bool", "(optional) Return just value (false) or object description (true).") }
                 },
-                (c) => Newton
+                (c) => ((JsValue ctx, JsValue[] x) => Newton(c.Interp, ctx, x))
             ),
         };
-
+        /*
         public object Abs(VarCtx ctx, object[] x)
         {
             if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
@@ -184,7 +188,7 @@ namespace Logic.Blocks.Api
             if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
                 throw new Exception("Invalid value");
             return (float)Math.Exp(v);
-        }
+        }*/
 
         public bool WithinTol(float x, float y, float atol, float rtol)
         {
@@ -227,23 +231,23 @@ namespace Logic.Blocks.Api
         //      If `full_output` is false (default), the root is returned.
         //      If true, the dictionary {{"root": root}, {"converged": true/false},
         //      {"iter": numIter}} is returned.
-        public object Newton(VarCtx ctx, object[] x)
+        public JsValue Newton(Engine eng, JsValue ctx, JsValue[] x)
         {
             int l = x.Length;
 
             // Arguments and their default values:
-            object func;
+            FunctionInstance func;
             float x0;
-            object fprime = null;
+            JsValue fprime = null;
             float tol = 1.48e-08F;
             long maxiter = 50;
-            object fprime2 = null;
+            JsValue fprime2 = null;
             float x1 = 0;
             float rtol = 0.0F;
             bool full_output = false;
 
             bool x1Provided = false;
-            object[] args = new object[1];
+            JsValue[] args = new JsValue[1];
 
             if (l < 2)
                 throw new Exception("Invalid value");
@@ -253,7 +257,7 @@ namespace Logic.Blocks.Api
             {
                 int curArgIndex = 0;
 
-                func = x[curArgIndex++];
+                func = x[curArgIndex++] as FunctionInstance;
 
                 if (!BlockUtils.TryGetFloat(x[curArgIndex++], out x0))
                     throw new Exception("Invalid value");
@@ -299,27 +303,27 @@ namespace Logic.Blocks.Api
             float p0 = x0;
             long itr = 0;
             float p = 0;
-            if (fprime is FuncCtx)
+            if (fprime is FunctionInstance fprimeFunc)
             {
                 // Newton - Raphson method
                 for (; itr < maxiter; ++itr)
                 {
                     // first evaluate fval
                     args[0] = p0;
-                    float fval = (float)Block.CallFunc(ctx, func, args);
+                    float fval = (float)TypeConverter.ToNumber(func.Call(ctx, args));
                     // if fval is 0, a root has been found, then terminate
                     if (fval == 0)
-                        return _newton_result_select(full_output, p0, itr, converged: true);
-                    float fder = (float)Block.CallFunc(ctx, fprime, args);
+                        return _newton_result_select(eng, full_output, p0, itr, converged: true);
+                    float fder = (float)TypeConverter.ToNumber(fprimeFunc.Call(ctx, args));
                     // stop iterating if the derivative is zero
                     if (fder == 0)
-                        return _newton_result_select(full_output, p0, itr + 1, converged: false);
+                        return _newton_result_select(eng, full_output, p0, itr + 1, converged: false);
 
                     // Newton step
                     float newton_step = fval / fder;
-                    if (fprime2 is FuncCtx)
+                    if (fprime2 is FunctionInstance fp2func)
                     {
-                        float fder2 = (float)Block.CallFunc(ctx, fprime2, args);
+                        float fder2 = (float)TypeConverter.ToNumber(fp2func.Call(ctx, args));
                         // Halley's method:
                         // newton_step /= (1.0 - 0.5 * newton_step * fder2 / fder)
                         // Only do it if denominator stays close enough to 1
@@ -332,7 +336,7 @@ namespace Logic.Blocks.Api
                     }
                     p = p0 - newton_step;
                     if (WithinTol(p, p0, atol: tol, rtol: rtol))
-                        return _newton_result_select(full_output, p, itr + 1, converged: true);
+                        return _newton_result_select(eng, full_output, p, itr + 1, converged: true);
                     p0 = p;
                 }
             }
@@ -353,9 +357,9 @@ namespace Logic.Blocks.Api
                     p1 += (p1 >= 0 ? eps : -eps);
                 }
                 args[0] = p0;
-                q0 = (float)Block.CallFunc(ctx, func, args);
+                q0 = (float)TypeConverter.ToNumber(func.Call(ctx, args));
                 args[0] = p1;
-                q1 = (float)Block.CallFunc(ctx, func, args);
+                q1 = (float)TypeConverter.ToNumber(func.Call(ctx, args));
                 if (Math.Abs(q1) < Math.Abs(q0))
                 {
                     float temp = q1;
@@ -372,9 +376,9 @@ namespace Logic.Blocks.Api
                     {
                         p = (p1 + p0) / 2.0F;
                         if (p1 != p0)
-                            return _newton_result_select(full_output, p, itr + 1, converged: false);
+                            return _newton_result_select(eng, full_output, p, itr + 1, converged: false);
                         else
-                            return _newton_result_select(full_output, p, itr + 1, converged: true);
+                            return _newton_result_select(eng, full_output, p, itr + 1, converged: true);
 
                     }
                     else
@@ -386,29 +390,29 @@ namespace Logic.Blocks.Api
                             p = (-q1 / q0 * p0 + p1) / (1.0F - q1 / q0);
                     }
                     if (WithinTol(p, p1, atol: tol, rtol: rtol))
-                        return _newton_result_select(full_output, p, itr + 1, converged: true);
+                        return _newton_result_select(eng, full_output, p, itr + 1, converged: true);
 
                     p0 = p1;
                     q0 = q1;
                     p1 = p;
                     args[0] = p1;
-                    q1 = (float)Block.CallFunc(ctx, func, args);
+                    q1 = (float)TypeConverter.ToNumber(func.Call(ctx, args));
                 }
             }
-            return _newton_result_select(full_output, p, itr + 1, converged: false);
+            return _newton_result_select(eng, full_output, p, itr + 1, converged: false);
         }
 
-        private object _newton_result_select(bool full_output, float p0,
+        private JsValue _newton_result_select(Engine eng, bool full_output, float p0,
             long itr, bool converged)
         {
             if (full_output)
             {
-                return new Dictionary<string, object>()
+                return JsValue.FromObject(eng, new Dictionary<string, object>()
                 {
                     {"root", p0 },
                     {"iter", itr },
                     {"converged", converged }
-                };
+                });
             }
             else
                 return p0;

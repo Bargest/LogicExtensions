@@ -31,6 +31,7 @@ namespace Jint.Runtime.Interpreter.Statements
 
         public Completion Execute()
         {
+            _engine.NextStatement();
             if (_statement.Type != Nodes.BlockStatement)
             {
                 _engine._lastSyntaxNode = _statement;

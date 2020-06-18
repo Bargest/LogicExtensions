@@ -326,6 +326,17 @@ namespace Jint.Native
                 return Convert(engine, a);
             }
 
+            if (value is Dictionary<string, object> dict)
+            {
+                var jsDict = new ObjectInstance(engine);
+                foreach (var kp in dict)
+                {
+                    var jsItem = FromObject(engine, kp.Value);
+                    jsDict.FastAddProperty(kp.Key, jsItem, true, true, true);
+                }
+                return jsDict;
+            }
+
             if (value is Delegate d)
             {
                 return new DelegateWrapper(engine, d);

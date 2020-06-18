@@ -12,7 +12,7 @@ namespace Logic.Blocks.Api
             new CpuApiFunc("print", true, "print message to console",
                 new Dictionary<string, CpuApiFunc.ArgInfo>{ { "msg", new CpuApiFunc.ArgInfo("object", "message to print") } },
                 (c) => c.Print
-            ),
+            ),/*
             new CpuApiFunc("typeof", true, "get object type",
                 new Dictionary<string, CpuApiFunc.ArgInfo>{ { "obj", new CpuApiFunc.ArgInfo("object", "object to get type") } },
                 (c) => c.Typeof
@@ -28,7 +28,7 @@ namespace Logic.Blocks.Api
             new CpuApiFunc("str", true, "convert to string",
                 new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("object", "value to convert") } },
                 (c) => c.Str
-            ),
+            ),*/
             new CpuApiFunc("cli", false, "clear interrupts",
                 new Dictionary<string, CpuApiFunc.ArgInfo>{},
                 (c) => c.Cli

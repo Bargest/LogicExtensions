@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Esprima.Ast;
 using Jint.Native;
@@ -136,8 +137,9 @@ namespace Jint.Runtime.Debugger
 
             if (!string.IsNullOrEmpty(breakpoint.Condition))
             {
-                var completionValue = _engine.Execute(breakpoint.Condition).GetCompletionValue();
-                return ((JsBoolean) completionValue)._value;
+                throw new NotImplementedException();
+                //var completionValue = _engine.Execute(breakpoint.Condition).GetCompletionValue();
+                //return ((JsBoolean) completionValue)._value;
             }
 
             return true;

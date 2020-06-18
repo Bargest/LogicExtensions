@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Logic.Script;
+using Jint.Native;
+using Jint.Runtime;
+
 namespace Logic.Blocks
 {
     /* 
@@ -9,40 +12,33 @@ namespace Logic.Blocks
      */
     public static class BlockUtils
     {
-        public static bool TryGetFloat(object arg, out float value)
+        public static bool TryGetFloat(JsValue arg, out float value)
         {
             value = 0;
-            if (arg is float flev)
+            try
             {
-                value = flev;
-                return true;
+                value = (float)TypeConverter.ToNumber(arg);
             }
-            else if (arg is long ilev)
+            catch
             {
-                value = ilev;
-                return true;
+                return false;
             }
-            else if (arg is string str)
-                return float.TryParse(str, out value);
-            return false;
+            return true;
+           
         }
 
-        public static bool TryGetLong(object arg, out long value)
+        public static bool TryGetLong(JsValue arg, out long value)
         {
             value = 0;
-            if (arg is float flev)
+            try
             {
-                value = (long)flev;
-                return true;
+                value = (long)TypeConverter.ToInteger(arg);
             }
-            else if (arg is long ilev)
+            catch
             {
-                value = ilev;
-                return true;
+                return false;
             }
-            else if (arg is string str)
-                return long.TryParse(str, out value);
-            return false;
+            return true;
         }
 
         // Anything can be cast to a bool, so no need to "try" here.

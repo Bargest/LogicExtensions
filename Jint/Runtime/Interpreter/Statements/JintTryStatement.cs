@@ -30,12 +30,16 @@ namespace Jint.Runtime.Interpreter.Statements
 
         protected override Completion ExecuteInternal()
         {
+            var startStack = _engine.CallStack.Count;
             var b = _block.Execute();
             if (b.Type == CompletionType.Throw)
             {
                 // execute catch
                 if (_catch != null)
                 {
+                    while (_engine.CallStack.Count > startStack)
+                        _engine.CallStack.Pop();
+
                     var c = b.Value;
                     var oldEnv = _engine.ExecutionContext.LexicalEnvironment;
                     var catchEnv = LexicalEnvironment.NewDeclarativeEnvironment(_engine, oldEnv);

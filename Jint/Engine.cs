@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using Esprima;
 using Esprima.Ast;
 using Jint.Native;
@@ -59,9 +60,9 @@ namespace Jint
             Factory = factory;
         }
     }
-    public class Engine
+    public class Engine : IDisposable
     {
-        private static readonly ParserOptions DefaultParserOptions = new ParserOptions
+        public static readonly ParserOptions DefaultParserOptions = new ParserOptions
         {
             AdaptRegexp = true,
             Tolerant = true,
@@ -169,12 +170,146 @@ namespace Jint
 
         internal readonly JintCallStack CallStack = new JintCallStack();
 
+
+        class TerminationException : Exception
+        {
+
+        }
+        public class ExecutionThread : IDisposable
+        {
+            public SendOrPostCallback cb;
+            public object state;
+            public Exception cbE;
+            public EventWaitHandle ResumeTask = new EventWaitHandle(false, EventResetMode.AutoReset);
+            public EventWaitHandle TaskPaused = new EventWaitHandle(false, EventResetMode.AutoReset);
+            public bool Terminate = false;
+            public int Gas = 0;
+
+            public Action OnNextStatement = null;
+            public Action<object> OnLog = null;
+            public Script Program;
+            public JsValue Result = null;
+
+            public JavaScriptException UnhandledException;
+
+            Thread InterpThread;
+            Engine Engine;
+
+            public ExecutionThread(Engine eng)
+            {
+                Engine = eng;
+                InterpThread = new Thread(ThreadEntry);
+                InterpThread.Start();
+            }
+
+            public bool HandleCb()
+            {
+                if (cb == null)
+                    return false;
+
+                // handle sync context
+                try
+                {
+                    cb(state);
+                }
+                catch (Exception e)
+                {
+                    cbE = e;
+                }
+                cb = null;
+                return true;
+            }
+
+            public void PauseThread(SendOrPostCallback d, object s)
+            {
+                cb = d;
+                state = s;
+                cbE = null;
+                TaskPaused.Set();
+                ResumeTask.WaitOne();
+                if (Terminate)
+                    throw new TerminationException();
+                if (cbE != null)
+                    throw cbE;
+            }
+            public void SyncDebug(object o)
+            {
+                if (OnLog != null)
+                    PauseThread(d => OnLog.Invoke(o), null);
+            }
+
+            public void ConsumeGas()
+            {
+                if (Terminate)
+                    throw new TerminationException();
+
+                while (Gas <= 0)
+                    PauseThread(null, null);
+                
+                OnNextStatement?.Invoke();
+                --Gas;
+            }
+
+            public void Dispose()
+            {
+                Terminate = true;
+                InterpThread?.Abort();
+                InterpThread = null;
+            }
+
+            public void ThreadEntry()
+            {
+                while (!Terminate)
+                {
+                    try
+                    {
+                        ResumeTask.WaitOne();
+                        if (Terminate)
+                            throw new TerminationException();
+                        Result = null;
+                        UnhandledException = null;
+                        OnNextStatement?.Invoke();
+                        if (Program != null)
+                            Result = Engine.Execute(Program).GetCompletionValue();
+                        else
+                            Result = null;
+                    }
+                    catch (TerminationException)
+                    {
+                        // Exited
+                        Terminate = true;
+                    }
+                    catch (JavaScriptException e)
+                    {
+                        UnhandledException = e;
+                    }
+                    catch (Exception e)
+                    {
+                        //Debug.Log(e);
+                        SyncDebug(e.Message);
+                    }
+                    finally
+                    {
+                        TaskPaused.Set();
+                    }
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            Executor?.Dispose();
+            Executor = null;
+        }
+
+        public ExecutionThread Executor;
         public Engine() : this(null)
         {
         }
 
         public Engine(Action<Options> options)
         {
+            Executor = new ExecutionThread(this);
             _executionContexts = new ExecutionContextStack(2);
 
             Global = GlobalObject.CreateGlobalObject(this);
@@ -273,7 +408,7 @@ namespace Jint
         public ErrorConstructor ReferenceError => _referenceError == null ? _referenceError = ErrorConstructor.CreateErrorConstructor(this, _referenceErrorFunctionName) : _referenceError;
         public ErrorConstructor UriError => _uriError == null ? _uriError = ErrorConstructor.CreateErrorConstructor(this, _uriErrorFunctionName) : _uriError;
 
-        public ref readonly ExecutionContext ExecutionContext
+        public ref readonly Runtime.Environments.ExecutionContext ExecutionContext
         {
             get => ref _executionContexts.Peek();
         }
@@ -305,11 +440,11 @@ namespace Jint
         }
         #endregion
 
-        public ExecutionContext EnterExecutionContext(
+        public Runtime.Environments.ExecutionContext EnterExecutionContext(
             LexicalEnvironment lexicalEnvironment,
             LexicalEnvironment variableEnvironment)
         {
-            var context = new ExecutionContext(
+            var context = new Runtime.Environments.ExecutionContext(
                 lexicalEnvironment,
                 variableEnvironment);
 
@@ -318,6 +453,18 @@ namespace Jint
         }
 
         public Engine SetValue(JsValue name, Delegate value)
+        {
+            Global.FastAddProperty(name, new DelegateWrapper(this, value), true, false, true);
+            return this;
+        }
+
+        public Engine SetValue(JsValue name, Func<JsValue, JsValue[], JsValue> value)
+        {
+            Global.FastAddProperty(name, new DelegateWrapper(this, value), true, false, true);
+            return this;
+        }
+
+        public Engine SetValue(JsValue name, Func<JsValue[], JsValue> value)
         {
             Global.FastAddProperty(name, new DelegateWrapper(this, value), true, false, true);
             return this;
@@ -378,18 +525,62 @@ namespace Jint
             CallStack.Clear();
         }
 
-        public Engine Execute(string source)
+        /*
+public Engine Execute(string source)
+{
+   return Execute(source, DefaultParserOptions);
+}
+
+public Engine Execute(string source, ParserOptions parserOptions)
+{
+   var parser = new JavaScriptParser(source, parserOptions);
+   return Execute(parser.ParseScript());
+}
+*/
+
+        // Called from thread
+        public void NextStatement()
         {
-            return Execute(source, DefaultParserOptions);
+            Executor.ConsumeGas();
         }
 
-        public Engine Execute(string source, ParserOptions parserOptions)
+        public void SetScript(Script script)
         {
-            var parser = new JavaScriptParser(source, parserOptions);
-            return Execute(parser.ParseScript());
+            Executor.Program = script;
         }
 
-        public Engine Execute(Script program)
+        public JsValue ContinueScript(int gas)
+        {
+            if (Executor.Terminate)
+                return null;
+
+            Executor.Result = null;
+            Executor.Gas = gas;
+            Executor.ResumeTask.Set();
+            var waitResult = Executor.TaskPaused.WaitOne(1000);
+            while (waitResult)
+            {
+                if (!Executor.HandleCb())
+                    break; // exit
+                Executor.ResumeTask.Set();
+                waitResult = Executor.TaskPaused.WaitOne(1000);
+            }
+            if (!waitResult)
+            {
+                Executor.Terminate = true;
+                Executor.ResumeTask.Set();
+            }
+
+            Executor.Program = null;
+            if (Executor.UnhandledException != null)
+                throw Executor.UnhandledException;
+
+            if (Executor.Gas == 0)
+                return null;
+            return Executor.Result;
+        }
+
+        protected Engine Execute(Script program)
         {
             ResetConstraints();
             ResetLastStatement();

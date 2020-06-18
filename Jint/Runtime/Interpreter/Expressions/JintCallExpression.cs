@@ -109,39 +109,33 @@ namespace Jint.Runtime.Interpreter.Expressions
             var func = _engine.GetValue(callee, false);
             var r = callee as Reference;
 
+            var stackItem = new CallStackElement(expression, func, r?.GetReferencedName()?.ToString() ?? "anonymous function");
+            var recursionDepth = _engine.CallStack.Push(stackItem);
+
+            JsValue result = null;
             if (_maxRecursionDepth >= 0)
             {
-                var stackItem = new CallStackElement(expression, func, r?.GetReferencedName()?.ToString() ?? "anonymous function");
-
-                var recursionDepth = _engine.CallStack.Push(stackItem);
-
                 if (recursionDepth > _maxRecursionDepth)
-                {
-                    _engine.CallStack.Pop();
                     ExceptionHelper.ThrowRecursionDepthOverflowException(_engine.CallStack, stackItem.ToString());
-                }
             }
 
             if (func._type == InternalTypes.Undefined)
-            {
                 ExceptionHelper.ThrowTypeError(_engine, r == null ? "" : $"Object has no method '{r.GetReferencedName()}'");
-            }
 
             if (!func.IsObject())
             {
                 if (_engine._referenceResolver == null || !_engine._referenceResolver.TryGetCallable(_engine, callee, out func))
-                {
-                    ExceptionHelper.ThrowTypeError(_engine,
-                        r == null ? "" : $"Property '{r.GetReferencedName()}' of object is not a function");
-                }
+                    ExceptionHelper.ThrowTypeError(_engine, r == null ? "" : $"Property '{r.GetReferencedName()}' of object is not a function");
             }
 
-            if (!(func is ICallable callable))
+            var callable = func as ICallable;
+            if (callable == null)
             {
                 var message = $"{r?.GetReferencedName() ?? ""} is not a function";
-                return ExceptionHelper.ThrowTypeError<object>(_engine, message);
+                ExceptionHelper.ThrowTypeError<object>(_engine, message);
             }
 
+            var evalCalled = false;
             var thisObject = Undefined.Instance;
             if (r != null)
             {
@@ -152,35 +146,28 @@ namespace Jint.Runtime.Interpreter.Expressions
                 }
                 else
                 {
-                    var env = (EnvironmentRecord) baseValue;
+                    var env = (EnvironmentRecord)baseValue;
                     thisObject = env.ImplicitThisValue();
                 }
 
                 // is it a direct call to eval ? http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.1.1
                 if (r.GetReferencedName() == CommonProperties.Eval && callable is EvalFunctionInstance instance)
                 {
-                    var value = instance.Call(thisObject, arguments, true);
-                    _engine._referencePool.Return(r);
-                    return value;
+                    result = instance.Call(thisObject, arguments, true);
+                    evalCalled = true;
                 }
             }
-
-            var result = callable.Call(thisObject, arguments);
-
-            if (_isDebugMode)
+            if (!evalCalled)
             {
-                _engine.DebugHandler.PopDebugCallStack();
+                result = callable.Call(thisObject, arguments);
+                if (_isDebugMode)
+                    _engine.DebugHandler.PopDebugCallStack();
             }
 
-            if (_maxRecursionDepth >= 0)
-            {
-                _engine.CallStack.Pop();
-            }
+            _engine.CallStack.Pop();
 
             if (!_cached && arguments.Length > 0)
-            {
                 _engine._jsValueArrayPool.ReturnArray(arguments);
-            }
 
             _engine._referencePool.Return(r);
             return result;

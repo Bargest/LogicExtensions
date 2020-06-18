@@ -17,16 +17,21 @@ namespace Jint.Runtime.Interop
         //private readonly bool _delegateContainsParamsArgument;
         private readonly Func<JsValue, JsValue[], JsValue> _d;
 
-        public DelegateWrapper(Engine engine, Delegate d)
+        public DelegateWrapper(Engine engine, Func<JsValue, JsValue[], JsValue> d)
             : base(engine, _name, FunctionThisMode.Global)
         {
-            //_d = d;
-            if (d is Func<JsValue[], JsValue> f)
-                _d = (t, a) => f(a);
-            else
-                _d = (Func<JsValue, JsValue[], JsValue>)d;
+            _d = d;
             _prototype = engine.Function.PrototypeObject;
+        }
 
+        public DelegateWrapper(Engine engine, Func<JsValue[], JsValue> d)
+            : this(engine, (t, a) => d(a))
+        {
+        }
+
+        public DelegateWrapper(Engine engine, Delegate d)
+            : this(engine, (d is Func<JsValue[], JsValue> f) ? (t, a) => f(a) : (Func<JsValue, JsValue[], JsValue>)d)
+        {
             /*var parameterInfos = _d.Method.GetParameters();
 
             _delegateContainsParamsArgument = false;

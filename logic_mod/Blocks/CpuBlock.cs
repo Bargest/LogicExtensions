@@ -1,4 +1,10 @@
 ﻿using Besiege;
+using Esprima;
+using Jint;
+using Jint.Native;
+using Jint.Native.Function;
+using Jint.Native.Map;
+using Jint.Runtime;
 using Logic.Script;
 using Modding;
 using Modding.Common;
@@ -34,7 +40,10 @@ namespace Logic.Blocks
         const int MaxGas = 500;
         MachineHandler machineHandler;
         public Logic ModContext;
-        public Interpreter Interp = new Interpreter();
+        public Engine Interp = new Engine((o) =>
+        {
+            o.LimitRecursion(1000);
+        });
         MSlider Gas = null;
         public ScriptText Script;
 
@@ -62,68 +71,6 @@ namespace Logic.Blocks
             // DO NOT CALL AddPIO here, because it sends invalid machine state in multiverse after simulation start
             machineHandler = ModContext.GetMachineHandler(BlockBehaviour);
             machineHandler.AddCpuBlock(this);
-
-            // Override CPU dictionary with APIs
-            // Note: for now this is crutch, we should make normal array object instead of just list
-            Interp.ArrayProto = new Func<List<object>, Function>[]
-            {
-                arr => new Function {
-                    Name = "push",
-                    Native = (c, varr) => Push(c, arr, varr)
-                },
-                arr => new Function {
-                    Name = "slice",
-                    Native = (c, varr) => Slice(c, arr, varr)
-                },
-                arr => new Function {
-                    Name = "splice",
-                    Native = (c, varr) => Splice(c, arr, varr)
-                }
-            }.ToDictionary(x => x(null).Name);
-        }
-
-        public static object Push(VarCtx c, List<object> arr, object[] varr)
-        {
-            arr.AddRange(varr);
-            return arr.Count;
-        }
-
-        public static object Slice(VarCtx c, List<object> arr, object[] varr)
-        {
-            if (varr.Length < 1 || !BlockUtils.TryGetLong(varr[0], out long start))
-                start = 0;
-            if (varr.Length < 2 || !BlockUtils.TryGetLong(varr[1], out long end))
-                end = arr.Count;
-            if (start < 0)
-                start = arr.Count + start;
-            if (end < 0)
-                end = arr.Count + end;
-            if (end < start)
-                return new List<object>();
-            return arr.Skip((int)start).Take((int)(end - start)).ToList();
-        }
-
-        public static object Splice(VarCtx c, List<object> arr, object[] varr)
-        {
-            if (varr.Length < 1 || !BlockUtils.TryGetLong(varr[0], out long lstart))
-                lstart = 0;
-            var start = (int)((lstart < 0) ? arr.Count + lstart : lstart);
-            if (start > arr.Count)
-                start = arr.Count;
-
-            if (varr.Length < 2 || !BlockUtils.TryGetLong(varr[1], out long deleteCount) || deleteCount > arr.Count - start)
-                deleteCount = arr.Count - start;
-
-            var deleted = new List<object>();
-            while (deleteCount > 0)
-            {
-                --deleteCount;
-                deleted.Add(arr[start]);
-                arr.RemoveAt(start);
-            }
-            for (int k = 2; k < varr.Length; ++k)
-                arr.Insert(start + k - 2, varr[k]);
-            return deleted;
         }
 
         void InitRender()
@@ -285,21 +232,24 @@ namespace Logic.Blocks
         {
             // cleanup fired timeouts
             if (irqId < 0)
-                Interp.RemoveIrqHandler(irqId);
+                RemoveIrqHandler(irqId);
         }
 
-        void OnCoreException(long irqId, object exc)
+        void OnCoreException(long irqId, Exception exc)
         {
-            Debug.Log("Unhandled exception " + (irqId >= 0 ? $" in irq {irqId}" : "") + ": " + exc);
+            var info = exc.Message;
+            if (exc is JavaScriptException jse)
+                info += " " + jse.CallStack;
+            Debug.Log("Unhandled exception " + (irqId >= 0 ? $" in irq {irqId}" : "") + ": " + info);
             lastError = Time.time;
             //BlockBehaviour.fireTag.Ignite(); // lol
         }
 
-        bool TryGetFloat(object arg, out float value)
+        bool TryGetFloat(JsValue arg, out float value)
         {
             return BlockUtils.TryGetFloat(arg, out value);
         }
-        bool TryGetLong(object arg, out long value)
+        bool TryGetLong(JsValue arg, out long value)
         {
             return BlockUtils.TryGetLong(arg, out value);
         }
@@ -314,6 +264,13 @@ namespace Logic.Blocks
 
         string PrintObject(object x, int level)
         {
+            if (x is JsValue js)
+            {
+                var obj = js.ToObject();
+                if (!(obj is JsValue))
+                    return PrintObject(obj, level);
+                return obj.ToString();
+            }
             if (x is Dictionary<string, object> d)
             {
                 if (level >= 1)
@@ -321,7 +278,7 @@ namespace Logic.Blocks
 
                 return "{\n  " + $"{string.Join(",\n  ", d.Select(y => $"{y.Key}: {PrintObject(y.Value, level + 1)}").ToArray())}" + "\n}";
             }
-            else if (x is List<object> a)
+            else if (x is object[] a)
             {
                 if (level >= 1)
                     return "<array>";
@@ -333,7 +290,7 @@ namespace Logic.Blocks
             }
         }
 
-        public object Print(VarCtx ctx, object[] x)
+        public JsValue Print(JsValue thiz, JsValue[] x)
         {
             if (x.Length == 0)
                 return null;
@@ -388,7 +345,7 @@ namespace Logic.Blocks
                 return "undefined";
             return "object";
         }
-
+        /*
         public object Int(VarCtx ctx, object[] x)
         {
             if (x.Length < 1 || !TryGetLong(x[0], out long v))
@@ -407,39 +364,70 @@ namespace Logic.Blocks
                 throw new Exception("Invalid value");
             return x[0]?.ToString();
         }
-
-        public void Cli(VarCtx ctx, object[] x)
+        */
+        public void Cli(JsValue thiz, JsValue[] x)
         {
-            Interp.Cli();
+            Cli();
         }
 
-        public void Sti(VarCtx ctx, object[] x)
+        public void Sti(JsValue thiz, JsValue[] x)
         {
-            Interp.Sti();
+            Sti();
+        }
+        
+        public void AddInterrupt(long i, object[] args)
+        {
+            if (!Interrupts.Contains(i))
+            {
+                if (args == null)
+                    InterruptArgs[i] = new object[] { i };
+                else
+                    InterruptArgs[i] = (new object[] { i }).Concat(args).ToArray();
+                Interrupts.Enqueue(i);
+            }
         }
 
-        public void Asleep(VarCtx ctx, object[] x)
+        public void RegisterIrqHandler(long id, FunctionInstance handler)
         {
-            Interp.PauseThread(null, null);
+            InterruptHandlers[id] = handler;
         }
 
-        public object Irqv(VarCtx ctx, object[] x)
+        public void RemoveIrqHandler(long id)
+        {
+            InterruptHandlers.Remove(id);
+        }
+        public void Cli()
+        {
+            InterruptsEnabled = false;
+        }
+
+        public void Sti()
+        {
+            InterruptsEnabled = true;
+        }
+
+        public void Asleep(JsValue thiz, JsValue[] x)
+        {
+            Interp.Executor.PauseThread(null, null);
+        }
+
+        public JsValue Irqv(JsValue thiz, JsValue[] x)
         {
             if (x.Length < 2)
                 return 0;
             if (!TryGetLong(x[0], out long irq) || irq < 0)
                 return 0;
 
-            if (!(x[1] is FuncCtx fn))
+            if (!(x[1] is FunctionInstance fn))
             {
                 if (x[1] != null)
                     return 0;
 
-                Interp.RemoveIrqHandler(irq);
+                RemoveIrqHandler(irq);
                 return 1;
             }
 
-            Interp.RegisterIrqHandler(irq, fn);
+            RegisterIrqHandler(irq, fn);
             if (PIO.ContainsKey(irq))
             {
                 TriggerValues[irq] = 0;
@@ -454,17 +442,17 @@ namespace Logic.Blocks
             return 1;
         }
 
-        public object Irq(VarCtx ctx, object[] x)
+        public JsValue Irq(JsValue ctx, JsValue[] x)
         {
             if (x.Length < 1)
                 return 0;
             if (!TryGetLong(x[0], out long irq) || irq < 0)
                 return 0;
-            Interp.AddInterrupt(irq, x.Skip(1).ToArray());
+            AddInterrupt(irq, x.Skip(1).ToArray());
             return 1;
         }
 
-        public object In(VarCtx ctx, object[] x)
+        public JsValue In(JsValue ctx, JsValue[] x)
         {
             if (x.Length < 1)
                 return -1;
@@ -475,7 +463,7 @@ namespace Logic.Blocks
             return r;
         }
 
-        public object ReadSensor(VarCtx ctx, object[] x)
+        public JsValue ReadSensor(JsValue ctx, JsValue[] x)
         {
             if (x.Length < 1)
                 return null;
@@ -487,17 +475,17 @@ namespace Logic.Blocks
             if (parent == null)
                 return null;
             if (parent is ExtSensorBlock sensor)
-                return sensor.GetTargetObject();
+                return JsValue.FromObject(Interp, sensor.GetTargetObject());
             if (parent is ExtAltimeterBlock alt)
-                return alt.GetPos();
+                return JsValue.FromObject(Interp, alt.GetPos());
             if (parent is ExtSpeedometerBlock speed)
-                return speed.GetV();
+                return JsValue.FromObject(Interp, speed.GetV());
             if (parent is ExtAnglometerBlock ang)
-                return ang.GetAng();
+                return JsValue.FromObject(Interp, ang.GetAng());
             return null;
         }
 
-        public object Out(VarCtx ctx, object[] x)
+        public JsValue Out(JsValue ctx, JsValue[] x)
         {
             if (x.Length < 2)
                 return 0;
@@ -509,15 +497,15 @@ namespace Logic.Blocks
             outv = Mathf.Clamp01(outv);
             if (float.IsNaN(outv))
             {
-                Print(ctx, new object[] { "Warning: output NaN to " + pio + " failed" });
+                Print(ctx, new JsValue[] { "Warning: output NaN to " + pio + " failed" });
                 return 0;
             }   
             PIO[(int)pio].SetOutValue(BlockBehaviour, outv);
             return 1;
         }
-        public object SetTimeout(VarCtx ctx, object[] x)
+        public JsValue SetTimeout(JsValue ctx, JsValue[] x)
         {
-            if (x.Length < 2 || !(x[1] is FuncCtx callback))
+            if (x.Length < 2 || !(x[1] is FunctionInstance callback))
                 return 0;
             if (!TryGetFloat(x[0], out float seconds))
                 return 0;
@@ -525,18 +513,18 @@ namespace Logic.Blocks
             //Debug.Log($"setTimeout({seconds}, {callback.FunctionProto.GetName()})");
             var newTimeout = timeoutId++;
             Timeouts[newTimeout] = Time.time + seconds;
-            Interp.RegisterIrqHandler(-newTimeout, callback);
+            RegisterIrqHandler(-newTimeout, callback);
             return newTimeout;
         }
 
-        public object ClearTimeout(VarCtx ctx, object[] x)
+        public JsValue ClearTimeout(JsValue ctx, JsValue[] x)
         {
             if (x.Length < 1)
                 return 0;
             if (!TryGetLong(x[0], out long timerId) || timerId <= 0)
                 return 0;
             Timeouts.Remove(timerId);
-            Interp.RemoveIrqHandler(-timerId);
+            RemoveIrqHandler(-timerId);
             return 1;
         }
 
@@ -545,6 +533,10 @@ namespace Logic.Blocks
             return Block.CallFunc(ctx, x[0], null);
         }
 
+        bool InterruptsEnabled = true;
+        Queue<long> Interrupts = new Queue<long>();
+        Dictionary<long, object[]> InterruptArgs = new Dictionary<long, object[]>();
+        Dictionary<long, FunctionInstance> InterruptHandlers = new Dictionary<long, FunctionInstance>();
         public override void OnSimulateStart()
         {
             printCount = 0;
@@ -555,12 +547,45 @@ namespace Logic.Blocks
             TriggetMode = PIO.ToDictionary(x => x.Key, x => 0);
             timeoutId = 1;
             Timeouts = new Dictionary<long, float>();
-            var func = Interp.PrepareScript(Script.Value);
-            Interp.SetUnhandledExceptionHandler(OnCoreException);
-            Interp.SetInterruptCompleteHandler(AfterInterrupt);
 
-            SingleInstance<Api.CpuApi>.Instance.Attach(this, func);
-            Interp.SetScript(func);
+            var script = new JavaScriptParser(Script.Value, Jint.Engine.DefaultParserOptions).ParseScript();
+            //Interp.SetValue("print", PrintCb);
+            //engine.SetValue("irqv", irqv);
+            Interp.SetScript(script);
+            Interp.Executor.OnLog = (x) => ModConsole.Log(x?.ToString());
+            Interp.Executor.OnNextStatement = () =>
+            {
+                if (!InterruptsEnabled)
+                    return;
+
+                Cli();
+                try
+                {
+                    while (Interrupts.Count > 0)
+                    {
+                        var irq = Interrupts.Dequeue();
+                        if (InterruptHandlers.ContainsKey(irq))
+                        {
+                            var args = InterruptArgs.ContainsKey(irq) ? InterruptArgs[irq] : new object[] { irq };
+                            InterruptArgs.Remove(irq);
+                            try
+                            {
+                                Interp.Invoke(InterruptHandlers[irq], args);
+                            }
+                            catch (JavaScriptException e)
+                            {
+                                Interp.Executor.PauseThread((d) => OnCoreException(irq, e), null);
+                            }
+                            Interp.Executor.PauseThread((d) => AfterInterrupt(irq), null);
+                        }
+                    }
+                }
+                finally
+                {
+                    Sti();
+                }
+            };
+            SingleInstance<Api.CpuApi>.Instance.Attach(this);
         }
 
         public override void SimulateUpdateAlways()
@@ -621,7 +646,7 @@ namespace Logic.Blocks
                                 || (TriggetMode[i] == 2 && !state);
                         }
                         if (correctFront)
-                            Interp.AddInterrupt(i, new object[] { TriggerValues[i], state ? (long) 1 : 0 });
+                            AddInterrupt(i, new object[] { TriggerValues[i], state ? (long) 1 : 0 });
                     }
                 }
                 // fire timeouts
@@ -629,13 +654,20 @@ namespace Logic.Blocks
                 var fireTimeouts = Timeouts.Where(x => x.Value <= Time.time).Select(x => x.Key).ToList();
                 foreach (var id in fireTimeouts)
                 {
-                    Interp.AddInterrupt(-id, null);
+                    AddInterrupt(-id, null);
                     Timeouts.Remove(id);
                 }
                 var gas = (int)Gas.Value;
                 if (gas > MaxGas)
                     gas = MaxGas;
-                Interp.ContinueScript(gas);
+                try
+                {
+                    Interp.ContinueScript(gas);
+                }
+                catch (JavaScriptException e)
+                {
+                    OnCoreException(-1, e);
+                }
             }
         }
 

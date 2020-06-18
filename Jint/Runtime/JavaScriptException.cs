@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using Esprima;
 using Esprima.Ast;
 using Jint.Native;
@@ -38,41 +39,45 @@ namespace Jint.Runtime
         {
             Location = location ?? default;
 
-            using (var sb = StringBuilderPool.Rent())
+            var sb = new StringBuilder();
+            var cnt = 0;
+            foreach (var cse in engine.CallStack)
             {
-                foreach (var cse in engine.CallStack)
+                if (cnt++ > 10)
                 {
-                    sb.Builder.Append(" at ")
-                        .Append(cse)
-                        .Append("(");
-
-                    for (var index = 0; index < cse.CallExpression.Arguments.Count; index++)
-                    {
-                        if (index != 0)
-                        {
-                            sb.Builder.Append(", ");
-                        }
-                        var arg = cse.CallExpression.Arguments[index];
-                        if (arg is Expression pke)
-                        {
-                            sb.Builder.Append(GetPropertyKey(pke));
-                        }
-                        else
-                        {
-                            sb.Builder.Append(arg);
-                        }
-                    }
-
-                    sb.Builder.Append(") @ ")
-                        .Append(cse.CallExpression.Location.Source)
-                        .Append(" ")
-                        .Append(cse.CallExpression.Location.Start.Column)
-                        .Append(":")
-                        .Append(cse.CallExpression.Location.Start.Line)
-                        .AppendLine();
+                    sb.Append("...");
+                    break;
                 }
-                CallStack = sb.ToString();
+                sb.Append(" at ")
+                    .Append(cse)
+                    .Append("(");
+
+                for (var index = 0; index < cse.CallExpression.Arguments.Count; index++)
+                {
+                    if (index != 0)
+                    {
+                        sb.Append(", ");
+                    }
+                    var arg = cse.CallExpression.Arguments[index];
+                    if (arg is Expression pke)
+                    {
+                        sb.Append(GetPropertyKey(pke));
+                    }
+                    else
+                    {
+                        sb.Append(arg);
+                    }
+                }
+
+                sb.Append(") @ ")
+                    .Append(cse.CallExpression.Location.Source)
+                    .Append(" ")
+                    .Append(cse.CallExpression.Location.Start.Column)
+                    .Append(":")
+                    .Append(cse.CallExpression.Location.Start.Line)
+                    .AppendLine();
             }
+            CallStack = sb.ToString();
 
             return this;
         }

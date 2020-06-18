@@ -18,6 +18,7 @@ using Logic.Script;
 using System.Text.RegularExpressions;
 using Logic.BlockScripts;
 using Jint.Native;
+using Esprima;
 
 namespace Logic
 {
@@ -42,7 +43,8 @@ namespace Logic
         public void Awake()
         {
             // Loading
-            var logic = new Interpreter();
+            var engine = new Jint.Engine();
+            //var logic = new Interpreter();
             Registers = new Dictionary<Type, Action<BlockBehaviour, KeyInputController>>();
             Unregisters = new Dictionary<Type, Action<BlockBehaviour>>();
 
@@ -56,10 +58,34 @@ namespace Logic
                     ModConsole.Log(x[0]?.ToObject().ToString());
                     return x[0];
                 };
-                var engine = new Jint.Engine();
-                //new Jint.Runtime.Interop.DelegateWrapper(engine, printCb).Call(null, new JsValue[] { "hello" });
+
+                JsValue curV = null;
+                Func<JsValue, JsValue[], JsValue> irqv = (thiz, x) => {
+                    curV = x[0];
+                    return null;
+                };
+                var script = new JavaScriptParser(text, Jint.Engine.DefaultParserOptions).ParseScript();
                 engine.SetValue("print", printCb);
-                var res = engine.Execute(text).GetCompletionValue();
+                engine.SetValue("irqv", irqv);
+                engine.SetScript(script);
+                engine.Executor.OnLog = (x) => ModConsole.Log(x?.ToString());
+                bool cli = false;
+                engine.Executor.OnNextStatement = () =>
+                {
+                    if (cli)
+                        return;
+                    cli = true;
+                    try
+                    {
+                        if (curV != null)
+                            engine.Invoke(curV);
+                    }
+                    finally
+                    {
+                        cli = false;
+                    }
+                };
+                var res = engine.ContinueScript(1000);
                 ModConsole.Log(res?.ToString());
             }, "exec script");
 

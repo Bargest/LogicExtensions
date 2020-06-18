@@ -1,4 +1,5 @@
-﻿using Logic.Script;
+﻿using Jint.Native;
+using Logic.Script;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,24 +24,35 @@ namespace Logic.Blocks.Api
         public bool Sync;
         public string Help;
         public Dictionary<string, ArgInfo> Arguments;
-        public Func<CpuBlock, Func<VarCtx, object[], object>> ImplementationFactory;
+        public Func<CpuBlock, Func<JsValue, JsValue[], JsValue>> ImplementationFactory;
 
-        public CpuApiFunc(string n, bool sync, string h, Dictionary<string, ArgInfo> args, Func<CpuBlock, Action<VarCtx, object[]>> impl)
+        public CpuApiFunc(string n, bool sync, string h, Dictionary<string, ArgInfo> args, Func<CpuBlock, Action<JsValue, JsValue[]>> impl)
             : this(n, sync, h, args, (c) =>
             {
                 var m = impl(c);
-                return (ctx, x) => { m(ctx, x); return null; };
+                return (thiz, x) => { m(thiz, x); return null; };
             })
         {
 
         }
 
-        public CpuApiFunc(string n, bool sync, string h, Dictionary<string, ArgInfo> args, Func<CpuBlock, Func<VarCtx, object[], object>> impl)
+        public CpuApiFunc(string n, bool sync, string h, Dictionary<string, ArgInfo> args, Func<CpuBlock, Func<JsValue, JsValue[], JsValue>> impl)
         {
             Name = n;
             Help = h;
             Sync = sync;
-            ImplementationFactory = impl;
+            if (!Sync)
+                ImplementationFactory = impl;
+            else
+                ImplementationFactory = (c) =>
+                {
+                    var m = impl(c);
+                    return (thiz, x) => {
+                        JsValue result = null;
+                        c.Interp.Executor.PauseThread((state) => result = m(thiz, x), null);
+                        return result;
+                    };
+                };
             Arguments = args;
         }
 

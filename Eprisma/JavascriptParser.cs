@@ -559,14 +559,6 @@ namespace Esprima
 
             switch (_lookahead.Type)
             {
-                case TokenType.Identifier:
-                    if ((_context.IsModule || _context.Await) && "await".Equals(_lookahead.Value))
-                    {
-                        TolerateUnexpectedToken(_lookahead);
-                    }
-                    expr = MatchAsyncFunction() ? (Expression) ParseFunctionExpression() : Finalize(node, new Identifier((string) NextToken().Value));
-                    break;
-
                 case TokenType.StringLiteral:
                     if (_context.Strict && _lookahead.Octal)
                     {
@@ -671,11 +663,24 @@ namespace Esprima
                         {
                             expr = ParseImportCall();
                         }
+                        else if (MatchKeyword("in"))
+                        {
+                            // Crutch: convert "in" to identifier
+                            expr = Finalize(node, new Identifier((string)NextToken().Value));
+                        }
                         else
                         {
                             ThrowUnexpectedToken(NextToken());
                         }
                     }
+                    break;
+
+                case TokenType.Identifier:
+                    if ((_context.IsModule || _context.Await) && "await".Equals(_lookahead.Value))
+                    {
+                        TolerateUnexpectedToken(_lookahead);
+                    }
+                    expr = MatchAsyncFunction() ? (Expression)ParseFunctionExpression() : Finalize(node, new Identifier((string)NextToken().Value));
                     break;
                 default:
                     ThrowUnexpectedToken(NextToken());
