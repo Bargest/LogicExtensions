@@ -28,7 +28,7 @@ namespace Jint.Runtime
     }
 
     [Flags]
-    internal enum InternalTypes
+    public enum InternalTypes
     {
         // should not be used, used for empty match
         None = 0,

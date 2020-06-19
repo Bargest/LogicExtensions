@@ -2,7 +2,7 @@ using Jint.Runtime.Descriptors;
 
 namespace Jint.Collections
 {
-    internal sealed class PropertyDictionary : HybridDictionary<PropertyDescriptor>
+    public sealed class PropertyDictionary : HybridDictionary<PropertyDescriptor>
     {
         public PropertyDictionary()
         {

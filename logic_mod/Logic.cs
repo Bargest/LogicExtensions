@@ -19,6 +19,7 @@ using System.Text.RegularExpressions;
 using Logic.BlockScripts;
 using Jint.Native;
 using Esprima;
+using Jint.Native.Function;
 
 namespace Logic
 {
@@ -346,12 +347,14 @@ namespace Logic
 
         CpuBlock SelectedCpu = null;
         CpuBlock PrevCpu = null;
-        string savedScript = "", sourceScript = "", editedScript = "";
+        string sourceScript = "", editedScript = "";
         int windowId;
         Rect uiRect;
         GUIStyle textStyle;
         Vector2 scroll = Vector2.zero;
         string statusText = "";
+        float lastScriptChangeTime;
+        HistoryBuffer<string> editHistory;
 
         void InitFont()
         {
@@ -412,7 +415,10 @@ namespace Logic
                 if (PrevCpu != SelectedCpu)
                 {
                     PrevCpu = SelectedCpu;
-                    savedScript = sourceScript = editedScript = SelectedCpu.Script.Value;
+                    sourceScript = editedScript = SelectedCpu.Script.Value;
+                    lastScriptChangeTime = Time.time;
+                    editHistory = new HistoryBuffer<string>(50);
+                    editHistory.Add(sourceScript);
                 }
                 uiRect = GUILayout.Window(windowId, uiRect, GuiFunc, "CPU edit");
             }
@@ -442,6 +448,8 @@ namespace Logic
                 statusText = "";
         }
 
+        int lastKBFocus = -1;
+        
         void GuiFunc(int id)
         {
             if (SelectedCpu == null)
@@ -474,20 +482,95 @@ namespace Logic
             scroll = GUILayout.BeginScrollView(scroll, GUILayout.Width(700), GUILayout.Height(600));
             // script could have changed because of Undo, so we update it with Script.Value
             if (sourceScript != SelectedCpu.Script.Value)
+            {
                 sourceScript = editedScript = SelectedCpu.Script.Value;
+                editHistory.Add(editedScript);
+            }
+
+            var current = Event.current;
+            GUI.SetNextControlName("codeInput");
+            if (GUI.GetNameOfFocusedControl() == "codeInput" && lastKBFocus == GUIUtility.keyboardControl)
+            {
+                if ((current.type == EventType.KeyDown || current.type == EventType.KeyUp) && current.isKey)
+                {
+                    if ((current.keyCode == KeyCode.Tab || current.character == '\t'))
+                    {
+                        if (current.type == EventType.KeyUp)
+                        {
+                            var te = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+                            if (!current.shift)
+                            {
+                                for (var i = 0; i < 4; i++)
+                                    te.Insert(' ');
+                            }
+                            else
+                            {
+                                var min = Math.Min(te.cursorIndex, te.selectIndex);
+                                var index = min;
+                                var temp = te.text;
+                                for (var i = 1; i < 5; i++)
+                                {
+                                    if ((min - i) < 0 || temp[min - i] != ' ')
+                                        break;
+                                    index = min - i;
+                                }
+
+                                if (index < min)
+                                {
+                                    te.selectIndex = index;
+                                    te.cursorIndex = min;
+                                    te.ReplaceSelection(string.Empty);
+                                }
+                            }
+                            editedScript = te.text;
+                            editHistory.Add(editedScript);
+                            UpdateScriptStatus(SelectedCpu.CheckScript(editedScript));
+                        }
+                        current.Use();
+                    }
+                    else if (current.keyCode == KeyCode.Z && current.control && current.type == EventType.KeyDown)
+                    {
+                        var prev = editHistory.Back();
+                        if (prev != null)
+                        {
+                            editedScript = prev;
+                            UpdateScriptStatus(SelectedCpu.CheckScript(editedScript));
+                        }
+                        current.Use();
+                    }
+                    else if (current.keyCode == KeyCode.Y && current.control && current.type == EventType.KeyDown)
+                    {
+                        var prev = editHistory.Forward();
+                        if (prev != null)
+                        {
+                            editedScript = prev;
+                            UpdateScriptStatus(SelectedCpu.CheckScript(editedScript));
+                        }
+                        current.Use();
+                    }
+                }
+            }
 
             editedScript = GUILayout.TextArea(editedScript, textStyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+
+            if (GUI.GetNameOfFocusedControl() == "codeInput" && current.type == EventType.KeyDown || current.type == EventType.KeyUp)
+                lastKBFocus = GUIUtility.keyboardControl;
+
             GUILayout.EndScrollView();
-            //lastScript = StaticSettings.SanatizeString(newText);
-            if (savedScript != editedScript)
+            if (editHistory.Top() != editedScript && lastScriptChangeTime + 0.5f < Time.time)
             {
-                savedScript = editedScript;
-                var e = SelectedCpu.CheckScript(savedScript);
+                editHistory.Add(editedScript);
+                lastScriptChangeTime = Time.time;
+                var e = SelectedCpu.CheckScript(editedScript);
                 UpdateScriptStatus(e);
             }
 
             if (GUILayout.Button("Save"))
             {
+                if (editHistory.Top() != editedScript)
+                    editHistory.Add(editedScript);
+
+                lastScriptChangeTime = Time.time;
                 foreach (var k in KeyTexts.Keys.ToArray())
                 {
                     var textChanged = k.GenerateText() != KeyTexts[k];
@@ -497,7 +580,7 @@ namespace Logic
                         SelectedCpu.AfterEdit(k);
                 }
 
-                var e = SelectedCpu.ApplyScript(savedScript);
+                var e = SelectedCpu.ApplyScript(editedScript);
                 if (e != null)
                 {
                     UpdateScriptStatus(e);

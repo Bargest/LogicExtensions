@@ -10,7 +10,7 @@ namespace Jint.Runtime.Interpreter
     /// <summary>
     /// Works as memento for function execution. Optimization to cache things that don't change.
     /// </summary>
-    internal sealed class JintFunctionDefinition
+    public sealed class JintFunctionDefinition
     {
         private readonly Engine _engine;
         

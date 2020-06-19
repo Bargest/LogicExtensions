@@ -1,6 +1,6 @@
 namespace Jint.Native.Object
 {
-    internal enum ObjectClass : byte
+    public enum ObjectClass : byte
     {
         Arguments,
         Array,

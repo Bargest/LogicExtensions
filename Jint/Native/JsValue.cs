@@ -49,7 +49,7 @@ namespace Jint.Native
 
         //[Pure]
         
-        internal bool IsNullOrUndefined()
+        public bool IsNullOrUndefined()
         {
             return _type < InternalTypes.Boolean;
         }
@@ -169,7 +169,7 @@ namespace Jint.Native
 
         //[Pure]
         
-        internal IIterator GetIterator(Engine engine)
+        public IIterator GetIterator(Engine engine)
         {
             if (!TryGetIterator(engine, out var iterator))
             {
@@ -181,7 +181,7 @@ namespace Jint.Native
 
         //[Pure]
         
-        internal bool TryGetIterator(Engine engine, out IIterator iterator)
+        public bool TryGetIterator(Engine engine, out IIterator iterator)
         {
             var objectInstance = TypeConverter.ToObject(engine, this);
 

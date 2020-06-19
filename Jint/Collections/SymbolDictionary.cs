@@ -3,7 +3,7 @@ using Jint.Runtime.Descriptors;
 
 namespace Jint.Collections
 {
-    internal sealed class SymbolDictionary : DictionarySlim<JsSymbol, PropertyDescriptor>
+    public sealed class SymbolDictionary : DictionarySlim<JsSymbol, PropertyDescriptor>
     {
         public SymbolDictionary()
         {

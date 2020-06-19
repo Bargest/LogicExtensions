@@ -96,11 +96,11 @@ namespace Logic.Blocks
             heightSlider.DisplayName = ">" + heightSlider.DisplayName;
         }
 
-        public Dictionary<string, object> GetPos()
+        public Dictionary<string, object> GetPos(CpuBlock cpu)
         {
             Vector3 myPos = Rigidbody.position;
             return new Dictionary<string, object> {
-                { "absolutePos", BlockUtils.Vec2Dict(myPos) }
+                { "absolutePos", BlockUtils.Vec2Obj(cpu, myPos) }
             };
         }
 

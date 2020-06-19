@@ -5,7 +5,7 @@ using Jint.Runtime.Interpreter.Expressions;
 
 namespace Jint.Runtime.Interpreter.Statements
 {
-    internal abstract class JintStatement<T> : JintStatement where T : Statement
+    public abstract class JintStatement<T> : JintStatement where T : Statement
     {
         internal readonly T _statement;
 
@@ -15,7 +15,7 @@ namespace Jint.Runtime.Interpreter.Statements
         }
     }
 
-    internal abstract class JintStatement
+    public abstract class JintStatement
     {
         protected readonly Engine _engine;
         private readonly Statement _statement;

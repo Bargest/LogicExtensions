@@ -7,7 +7,7 @@ namespace Jint.Native.Iterator
     /// <summary>
     /// Handles looping of iterator values, sub-classes can use to implement wanted actions.
     /// </summary>
-    internal abstract class IteratorProtocol
+    public abstract class IteratorProtocol
     {
         protected readonly Engine _engine;
         private readonly IIterator _iterator;
@@ -86,7 +86,7 @@ namespace Jint.Native.Iterator
             return jsValue;
         }
 
-        internal static void AddEntriesFromIterable(ObjectInstance target, IIterator iterable, object adder)
+        public static void AddEntriesFromIterable(ObjectInstance target, IIterator iterable, object adder)
         {
             if (!(adder is ICallable callable))
             {

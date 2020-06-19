@@ -10,7 +10,7 @@ namespace Jint.Native.Function
 {
     public abstract class FunctionInstance : ObjectInstance, ICallable
     {
-        internal enum FunctionThisMode
+        public enum FunctionThisMode
         {
             Lexical,
             Strict,
@@ -28,7 +28,7 @@ namespace Jint.Native.Function
         internal readonly JintFunctionDefinition _functionDefinition;
         internal readonly FunctionThisMode _thisMode;
 
-        internal FunctionInstance(
+        protected FunctionInstance(
             Engine engine,
             JintFunctionDefinition function,
             LexicalEnvironment scope,
@@ -39,7 +39,7 @@ namespace Jint.Native.Function
             _environment = scope;
         }
 
-        internal FunctionInstance(
+        protected FunctionInstance(
             Engine engine,
             JsString name,
             FunctionThisMode thisMode = FunctionThisMode.Global,

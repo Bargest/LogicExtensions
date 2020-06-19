@@ -2,6 +2,7 @@
 using Jint.Native.Object;
 using Jint.Runtime.Interop;
 using Logic.Script;
+using mattmc3.dotmore.Collections.Generic;
 using Modding;
 using System;
 using System.Collections.Generic;
@@ -13,8 +14,14 @@ namespace Logic.Blocks.Api
 {
     public class CpuApi : SingleInstance<CpuApi>
     {
+        class ROApiDescription
+        {
+            public List<CpuApiProperty> StaticFields;
+            public List<CpuApiProperty> InstanceFields;
+        }
+
         Dictionary<string, CpuApiFunc> RootApi;
-        Dictionary<string, Dictionary<string, CpuApiFunc>> ApiNamespaces = new Dictionary<string, Dictionary<string, CpuApiFunc>>();
+        Dictionary<string, ROApiDescription> ApiNamespaces = new Dictionary<string, ROApiDescription>();
 
         public override string Name => "CpuApi";
 
@@ -26,48 +33,52 @@ namespace Logic.Blocks.Api
             foreach (var kp in ApiNamespaces)
             {
                 var obj = block.Interp.Global.Get(kp.Key) as ObjectInstance;
-                if (obj == null)
-                {
-                    obj = new ObjectInstance(block.Interp);
-                    block.Interp.Global.Set(kp.Key, obj);
-                }
-                foreach (var f in kp.Value)
-                    obj.FastAddProperty(f.Key, new DelegateWrapper(block.Interp, f.Value.ImplementationFactory(block)), true, false, true);
+                if (obj != null)
+                    throw new Exception($"Runtime error: namespace {kp.Key} already exists");
+
+                obj = ApiObjectConstructor.CreateApiConstructor(block, kp.Key, kp.Value.StaticFields, kp.Value.InstanceFields);
+                block.Interp.Global.Set(kp.Key, obj);
             }
-            // block.Interp.AddExtVariable(ctx, kp.Key, kp.Value.ToDictionary(x => x.Key, x => (object)block.Interp.CreateFunc(ctx, x.Value.Name, x.Value.ImplementationFactory(block), x.Value.Sync)));
+            // Legacy crutch
+            var math = block.Interp.Global.Get("Math") as ObjectInstance;
+            math.Set("newton", block.Interp.Global.Get("MathExt").Get("newton"));
         }
 
-        public void AddNamespace(string nsp, ApiList apiList)
+        public void AddNamespace(string nsp, ApiDescription apiList)
         {
             if (string.IsNullOrEmpty(nsp))
                 throw new Exception("Namespace cannot be empty");
 
-            var apiDict = apiList.Api.ToDictionary(x => x.Name);
-            if (!ApiNamespaces.ContainsKey(nsp))
-            {
-                ApiNamespaces[nsp] = new Dictionary<string, CpuApiFunc>();
-            }
-            else
-            {
-                var dupKey = ApiNamespaces[nsp].Keys.Where(x => apiDict.ContainsKey(x)).FirstOrDefault();
-                if (dupKey != null)
-                    throw new Exception($"Failed adding functions to {nsp}: duplicate name {dupKey} found!");
-            }
+            var apiDict = apiList.StaticFields.ToDictionary(x => x.Name);
+            if (ApiNamespaces.ContainsKey(nsp))
+                throw new Exception($"Namespace {nsp} already exist");
 
-            foreach (var api in apiDict)
-                ApiNamespaces[nsp].Add(api.Key, api.Value);
+            ApiNamespaces[nsp] = new ROApiDescription
+            {
+                InstanceFields = apiList.InstanceFields?.ToList(),
+                StaticFields = apiList.StaticFields?.ToList()
+            };
         }
 
         public IEnumerable<string> GetHelp()
         {
             return RootApi.Values.Select(x => x.ToString())
-                .Concat(ApiNamespaces.SelectMany(x => new[] { $"{x.Key} module:" }.Concat(x.Value.Values.Select(y => x.Key+"."+y.ToString()))));
+                .Concat(ApiNamespaces.SelectMany(x => new[] { $"{x.Key} module:" }
+                            .Concat(
+                                x.Value.StaticFields?.Select(y => x.Key+"."+y.ToString()) ?? new string[0]
+                            ).Append("instance fields:")
+                            .Concat(
+                                x.Value.InstanceFields?.Select(y => y.ToString()) ?? new string[0]
+                            )
+                       )
+                 );
         }
 
         public CpuApi()
         {
-            RootApi = new CpuRoot().Api.ToDictionary(x => x.Name);
-            AddNamespace("Math", new CpuMath());
+            RootApi = new CpuRoot().StaticFields.ToDictionary(x => x.Name, x => x as CpuApiFunc);
+            AddNamespace("MathExt", new CpuMathExt());
+            AddNamespace(CpuQuaternion.Name, new CpuQuaternion());
             //AddNamespace("Object", new CpuObject());
         }
 

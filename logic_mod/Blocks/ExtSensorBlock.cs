@@ -263,7 +263,7 @@ namespace Logic.Blocks
             overlapCount = foundColliders.Count;
         }
 
-        public Dictionary<string, object> GetTargetObject()
+        public Dictionary<string, object> GetTargetObject(CpuBlock cpu)
         {
             if (closestCollider == null)
                 return null;
@@ -305,9 +305,9 @@ namespace Logic.Blocks
             {
                 { "static", isStaic ? (long)1 : 0 },
                 { "type", objectType },
-                { "relativePos", BlockUtils.Vec2Dict(relativePos) },
-                { "absolutePos", BlockUtils.Vec2Dict(closestPoint) },
-                { "velocity", BlockUtils.Vec2Dict(targetV) }
+                { "relativePos", BlockUtils.Vec2Obj(cpu, relativePos) },
+                { "absolutePos", BlockUtils.Vec2Obj(cpu, closestPoint) },
+                { "velocity", BlockUtils.Vec2Obj(cpu, targetV) }
             };
 
             return detectedObjectInfo;

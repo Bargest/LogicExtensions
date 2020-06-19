@@ -134,14 +134,14 @@ namespace Logic.Blocks
             return (!(a < 0f)) ? a : (a + 360f);
         }
 
-        public Dictionary<string, object> GetAng()
+        public Dictionary<string, object> GetAng(CpuBlock cpu)
         {
             Quaternion quaternion = base.transform.rotation;
             Vector3 angV = Rigidbody.angularVelocity;
             return new Dictionary<string, object>
             {
-                { "quaternion", BlockUtils.Quat2Dict(quaternion) },
-                { "velocity", BlockUtils.Vec2Dict(angV) }
+                { "quaternion", BlockUtils.Quat2Obj(cpu, quaternion) },
+                { "velocity", BlockUtils.Vec2Obj(cpu, angV) }
             };
         }
 

@@ -6,21 +6,48 @@ using System.Linq;
 
 namespace Logic.Blocks.Api
 {
-    public class CpuApiFunc
+    public class CpuApiProperty
     {
-        public struct ArgInfo
+        public readonly string Name;
+        public CpuApiProperty(string name)
         {
-            public string Type;
-            public string Info;
-
-            public ArgInfo(string t, string i)
-            {
-                Type = t;
-                Info = i;
-            }
+            Name = name;
         }
 
-        public string Name;
+        public override string ToString()
+        {
+            return Name;
+        }
+    }
+    public struct ArgInfo
+    {
+        public string Type;
+        public string Info;
+
+        public ArgInfo(string t, string i)
+        {
+            Type = t;
+            Info = i;
+        }
+    }
+
+    public class CpuApiValue : CpuApiProperty
+    {
+        public JsValue Value;
+        public ArgInfo Info;
+        public CpuApiValue(string n, JsValue v, ArgInfo i) : base(n)
+        {
+            Value = v;
+            Info = i;
+        }
+        public override string ToString()
+        {
+            return $"{Info.Type} {Name}: {Info.Info}";
+        }
+    }
+
+    public class CpuApiFunc : CpuApiProperty
+    {
         public bool Sync;
         public string Help;
         public Dictionary<string, ArgInfo> Arguments;
@@ -37,8 +64,8 @@ namespace Logic.Blocks.Api
         }
 
         public CpuApiFunc(string n, bool sync, string h, Dictionary<string, ArgInfo> args, Func<CpuBlock, Func<JsValue, JsValue[], JsValue>> impl)
+            : base(n)
         {
-            Name = n;
             Help = h;
             Sync = sync;
             if (!Sync)

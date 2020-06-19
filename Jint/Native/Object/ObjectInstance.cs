@@ -24,17 +24,17 @@ namespace Jint.Native.Object
         private bool _initialized;
         private readonly ObjectClass _class;
 
-        internal PropertyDictionary _properties;
-        internal SymbolDictionary _symbols;
+        public PropertyDictionary _properties;
+        public SymbolDictionary _symbols;
 
-        internal ObjectInstance _prototype;
+        public ObjectInstance _prototype;
         protected readonly Engine _engine;
 
         public ObjectInstance(Engine engine) : this(engine, ObjectClass.Object)
         {
         }
 
-        internal ObjectInstance(Engine engine, ObjectClass objectClass, InternalTypes type = InternalTypes.Object)
+        public ObjectInstance(Engine engine, ObjectClass objectClass, InternalTypes type = InternalTypes.Object)
             : base(type)
         {
             _engine = engine;
@@ -63,7 +63,7 @@ namespace Jint.Native.Object
         /// </summary>
         public virtual bool Extensible { get; private set; }
 
-        internal PropertyDictionary Properties
+        public PropertyDictionary Properties
         {
             [DebuggerStepThrough]
             get => _properties;
@@ -72,7 +72,7 @@ namespace Jint.Native.Object
         /// <summary>
         /// A value indicating a specification defined classification of objects.
         /// </summary>
-        internal ObjectClass Class
+        public ObjectClass Class
         {
             [DebuggerStepThrough]
             get => _class;
@@ -81,7 +81,7 @@ namespace Jint.Native.Object
         /// <summary>
         /// https://tc39.es/ecma262/#sec-construct
         /// </summary>
-        internal ObjectInstance Construct(IConstructor f, JsValue[] argumentsList = null, IConstructor newTarget = null)
+        public ObjectInstance Construct(IConstructor f, JsValue[] argumentsList = null, IConstructor newTarget = null)
         {
             if (newTarget == null)
                 newTarget = f;
@@ -93,7 +93,7 @@ namespace Jint.Native.Object
         /// <summary>
         /// https://tc39.es/ecma262/#sec-speciesconstructor
         /// </summary>
-        internal static IConstructor SpeciesConstructor(ObjectInstance o, IConstructor defaultConstructor)
+        public static IConstructor SpeciesConstructor(ObjectInstance o, IConstructor defaultConstructor)
         {
             var c = o.Get(CommonProperties.Constructor);
             if (c.IsUndefined())
@@ -121,7 +121,7 @@ namespace Jint.Native.Object
         }
 
 
-        internal void SetProperties(PropertyDictionary properties)
+        public void SetProperties(PropertyDictionary properties)
         {
             if (properties != null)
             {
@@ -130,13 +130,13 @@ namespace Jint.Native.Object
             _properties = properties;
         }
 
-        internal void SetSymbols(SymbolDictionary symbols)
+        public void SetSymbols(SymbolDictionary symbols)
         {
             _symbols = symbols;
         }
 
-       
-        internal void SetProperty(JsValue property, PropertyDescriptor value)
+
+        public void SetProperty(JsValue property, PropertyDescriptor value)
         {
             if (property is JsString jsString)
             {
@@ -148,14 +148,14 @@ namespace Jint.Native.Object
             }
         }
 
-       
-        internal void SetProperty(string property, PropertyDescriptor value)
+
+        public void SetProperty(string property, PropertyDescriptor value)
         {
             Key key = property;
             SetProperty(key, value);
         }
 
-       
+
         internal void SetProperty(Key property, PropertyDescriptor value)
         {
             if (_properties == null)
@@ -163,7 +163,7 @@ namespace Jint.Native.Object
             _properties[property] = value;
         }
 
-       
+
         internal void SetDataProperty(string property, JsValue value)
         {
             if (_properties == null)

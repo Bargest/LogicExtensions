@@ -15,12 +15,12 @@ namespace Jint.Runtime.Descriptors
         internal PropertyFlag _flags;
         internal JsValue _value;
 
-        protected PropertyDescriptor(PropertyFlag flags)
+        public PropertyDescriptor(PropertyFlag flags)
         {
             _flags = flags;
         }
 
-        protected internal PropertyDescriptor(JsValue value, PropertyFlag flags) : this(flags)
+        public PropertyDescriptor(JsValue value, PropertyFlag flags) : this(flags)
         {
             if ((_flags & PropertyFlag.CustomJsValue) != 0)
             {

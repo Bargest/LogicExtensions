@@ -10,185 +10,26 @@ using System.Text;
 
 namespace Logic.Blocks.Api
 {
-    public class CpuMath : ApiList
+    public class CpuMathExt : ApiDescription
     {
-        public override List<CpuApiFunc> Api => new List<CpuApiFunc>
-        {/*
-            new CpuApiFunc("abs", false, "absolute value",
-                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply abs") } },
-                (c) => Abs
-            ),
-            new CpuApiFunc("ceil", false, "ceiling",
-                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply ceil") } },
-                (c) => Ceiling
-            ),
-            new CpuApiFunc("floor", false, "floor",
-                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply floor") } },
-                (c) => Floor
-            ),
-            new CpuApiFunc("round", false, "nearest integer",
-                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply round") } },
-                (c) => Round
-            ),
-            new CpuApiFunc("sqrt", false, "square root",
-                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply square root") } },
-                (c) => Sqrt
-            ),
-            new CpuApiFunc("pow", false, "power x^y",
-                new Dictionary<string, CpuApiFunc.ArgInfo>{
-                    { "x", new CpuApiFunc.ArgInfo("float", "value to apply") },
-                    { "y", new CpuApiFunc.ArgInfo("float", "power") } },
-                (c) => Pow
-            ),
-            new CpuApiFunc("sin", false, "sin trigonometry function",
-                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply sin") } },
-                (c) => Sin
-            ),
-            new CpuApiFunc("cos", false, "cos trigonometry function",
-                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply cos") } },
-                (c) => Cos
-            ),
-            new CpuApiFunc("tan", false, "tan trigonometry function",
-                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply tan") } },
-                (c) => Tan
-            ),
-            new CpuApiFunc("asin", false, "asin trigonometry function",
-                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply asin") } },
-                (c) => Asin
-            ),
-            new CpuApiFunc("acos", false, "acos trigonometry function",
-                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply acos") } },
-                (c) => Acos
-            ),
-            new CpuApiFunc("atan", false, "atan trigonometry function",
-                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply atan") } },
-                (c) => Atan
-            ),
-            new CpuApiFunc("log", false, "logarithm",
-                new Dictionary<string, CpuApiFunc.ArgInfo>{
-                    { "value", new CpuApiFunc.ArgInfo("float", "value to apply logarifm") },
-                    { "newBase", new CpuApiFunc.ArgInfo("float", "logarithm base, defaults to e") }
-                },
-                (c) => Log
-            ),
-            new CpuApiFunc("exp", false, "exponential",
-                new Dictionary<string, CpuApiFunc.ArgInfo>{ { "value", new CpuApiFunc.ArgInfo("float", "value to apply exp") } },
-                (c) => Exp
-            ),*/
+        public override List<CpuApiProperty> InstanceFields => null;
+        public override List<CpuApiProperty> StaticFields => new List<CpuApiProperty>
+        {
             new CpuApiFunc("newton", false, "numerical solver",
-                new Dictionary<string, CpuApiFunc.ArgInfo>{
-                    { "func", new CpuApiFunc.ArgInfo("func", "The function whose zero is wanted. It must be a function of a single variable") },
-                    { "x0", new CpuApiFunc.ArgInfo("float", "An initial estimate of the zero that should be somewhere near the actual zero.") },
-                    { "fprime", new CpuApiFunc.ArgInfo("func", "(optional) The derivative of the function when available.") },
-                    { "tol", new CpuApiFunc.ArgInfo("float", "(optional) The allowable error of the zero value.") },
-                    { "maxiter", new CpuApiFunc.ArgInfo("int", "(optional) Maximum number of iterations.") },
-                    { "fprime2", new CpuApiFunc.ArgInfo("func", "(optional) The second order derivative of the function when available.") },
-                    { "x1", new CpuApiFunc.ArgInfo("float", "(optional) Estimate of the zero. Used if `fprime` is not provided.") },
-                    { "rtol", new CpuApiFunc.ArgInfo("flot", "(optional) Tolerance (relative) for termination.") },
-                    { "full_output", new CpuApiFunc.ArgInfo("bool", "(optional) Return just value (false) or object description (true).") }
+                new Dictionary<string, ArgInfo>{
+                    { "func", new ArgInfo("func", "The function whose zero is wanted. It must be a function of a single variable") },
+                    { "x0", new ArgInfo("float", "An initial estimate of the zero that should be somewhere near the actual zero.") },
+                    { "fprime", new ArgInfo("func", "(optional) The derivative of the function when available.") },
+                    { "tol", new ArgInfo("float", "(optional) The allowable error of the zero value.") },
+                    { "maxiter", new ArgInfo("int", "(optional) Maximum number of iterations.") },
+                    { "fprime2", new ArgInfo("func", "(optional) The second order derivative of the function when available.") },
+                    { "x1", new ArgInfo("float", "(optional) Estimate of the zero. Used if `fprime` is not provided.") },
+                    { "rtol", new ArgInfo("flot", "(optional) Tolerance (relative) for termination.") },
+                    { "full_output", new ArgInfo("bool", "(optional) Return just value (false) or object description (true).") }
                 },
                 (c) => ((JsValue ctx, JsValue[] x) => Newton(c.Interp, ctx, x))
             ),
         };
-        /*
-        public object Abs(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Abs(v);
-        }
-        public object Ceiling(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            // since int is not supported by the JS implementation, we will be
-            // using long
-            return (long)Math.Ceiling(v);
-        }
-        public object Floor(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (long)Math.Floor(v);
-        }
-        public object Round(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (long)Math.Round(v);
-        }
-        public object Pow(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 2 || !BlockUtils.TryGetFloat(x[0], out float v) || !BlockUtils.TryGetFloat(x[1], out float y))
-                throw new Exception("Invalid value");
-            return (float)Math.Pow(v, y);
-        }
-
-        public object Sqrt(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Sqrt(v);
-        }
-        public object Sin(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Sin(v);
-        }
-        public object Cos(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Cos(v);
-        }
-        public object Tan(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Tan(v);
-        }
-
-        public object Asin(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Asin(v);
-        }
-        public object Acos(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Acos(v);
-        }
-        public object Atan(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Atan(v);
-        }
-        public object Log(VarCtx ctx, object[] x)
-        {
-            float v, newBase;
-            int l = x.Length;
-            if (l < 1 || !BlockUtils.TryGetFloat(x[0], out v))
-                throw new Exception("Invalid value");
-
-            if (l == 1)
-                return (float)Math.Log(v);
-            else
-            {
-                if (!BlockUtils.TryGetFloat(x[1], out newBase))
-                    throw new Exception("Invalid value");
-                return (float)Math.Log(v, newBase);
-            }
-        }
-        public object Exp(VarCtx ctx, object[] x)
-        {
-            if (x.Length < 1 || !BlockUtils.TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return (float)Math.Exp(v);
-        }*/
 
         public bool WithinTol(float x, float y, float atol, float rtol)
         {

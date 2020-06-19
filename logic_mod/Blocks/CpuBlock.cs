@@ -208,9 +208,7 @@ namespace Logic.Blocks
         {
             try
             {
-                var lexer = new Lexer(text);
-                var parser = new Parser(lexer);
-                var root = parser.Parse();
+                new JavaScriptParser(text).ParseScript();
                 return null;
             }
             catch (Exception e)
@@ -331,40 +329,25 @@ namespace Logic.Blocks
             return null;
         }
 
-        public object Typeof(VarCtx ctx, object[] x)
-        {
-            if (x.Length == 0)
-                return null;
-            if (x[0] is FuncCtx)
-                return "function";
-            if (x[0] is long)
-                return "int";
-            if (x[0] is float)
-                return "float";
-            if (x[0] == Block.Undefined)
-                return "undefined";
-            return "object";
-        }
-        /*
-        public object Int(VarCtx ctx, object[] x)
+        public JsValue Int(JsValue ctx, JsValue[] x)
         {
             if (x.Length < 1 || !TryGetLong(x[0], out long v))
                 throw new Exception("Invalid value");
             return v;
         }
-        public object Float(VarCtx ctx, object[] x)
+        public JsValue Float(JsValue ctx, JsValue[] x)
         {
             if (x.Length < 1 || !TryGetFloat(x[0], out float v))
                 throw new Exception("Invalid value");
             return v;
         }
-        public object Str(VarCtx ctx, object[] x)
+        public JsValue Str(JsValue ctx, JsValue[] x)
         {
             if (x.Length < 1)
                 throw new Exception("Invalid value");
             return x[0]?.ToString();
         }
-        */
+        
         public void Cli(JsValue thiz, JsValue[] x)
         {
             Cli();
@@ -475,13 +458,13 @@ namespace Logic.Blocks
             if (parent == null)
                 return null;
             if (parent is ExtSensorBlock sensor)
-                return JsValue.FromObject(Interp, sensor.GetTargetObject());
+                return JsValue.FromObject(Interp, sensor.GetTargetObject(this));
             if (parent is ExtAltimeterBlock alt)
-                return JsValue.FromObject(Interp, alt.GetPos());
+                return JsValue.FromObject(Interp, alt.GetPos(this));
             if (parent is ExtSpeedometerBlock speed)
-                return JsValue.FromObject(Interp, speed.GetV());
+                return JsValue.FromObject(Interp, speed.GetV(this));
             if (parent is ExtAnglometerBlock ang)
-                return JsValue.FromObject(Interp, ang.GetAng());
+                return JsValue.FromObject(Interp, ang.GetAng(this));
             return null;
         }
 

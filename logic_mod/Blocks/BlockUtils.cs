@@ -4,6 +4,10 @@ using UnityEngine;
 using Logic.Script;
 using Jint.Native;
 using Jint.Runtime;
+using Logic.Blocks.Api;
+using Jint.Native.Object;
+using Jint.Native.Function;
+using System.Linq;
 
 namespace Logic.Blocks
 {
@@ -42,38 +46,40 @@ namespace Logic.Blocks
         }
 
         // Anything can be cast to a bool, so no need to "try" here.
-        public static bool GetBool(object arg)
+        public static bool GetBool(JsValue arg)
         {
-            if (arg is bool b)
-                return b;
-            if (arg is long i)
-                return i != 0;
-            if (arg is float f)
-                return f != 0;
-            if (arg == Block.Undefined)
-                return false;
-            return arg != null;
+            return TypeConverter.ToBoolean(arg);
         }
 
-        public static Dictionary<string, object> Quat2Dict(Quaternion q)
+        static string[] vecKeys = new[] { "x", "y", "z", "w" };
+        static string[] quatKeys = new[] { "x", "y", "z", "w" };
+
+        public static Quaternion ToQuat(ObjectInstance obj)
         {
-            return new Dictionary<string, object>
-            {
-                { "w", q.w },
-                { "x", q.x },
-                { "y", q.y },
-                { "z", q.z }
-            };
+            var keys = quatKeys.Select(y => (float)TypeConverter.ToNumber(obj.Get(y))).ToArray();
+            return new Quaternion(keys[0], keys[1], keys[2], keys[3]);
         }
 
-        public static Dictionary<string, object> Vec2Dict(Vector3 v)
+        public static Vector3 ToVector3(ObjectInstance obj)
         {
-            return new Dictionary<string, object>
+            var keys = vecKeys.Select(y => (float)TypeConverter.ToNumber(obj.Get(y))).ToArray();
+            return new Vector3(keys[0], keys[1], keys[2]);
+        }
+
+        public static ObjectInstance Quat2Obj(CpuBlock b, Quaternion q)
+        {
+            var quat = b.Interp.Global.Get(CpuQuaternion.Name) as IConstructor;
+            return quat.Construct(new JsValue[] { q.x, q.y, q.z, q.w }, null);
+        }
+
+        public static JsValue Vec2Obj(CpuBlock b, Vector3 v)
+        {
+            return JsValue.FromObject(b.Interp, new Dictionary<string, object>
             {
                 { "x", v.x },
                 { "y", v.y },
                 { "z", v.z }
-            };
+            });
         }
     }
 }

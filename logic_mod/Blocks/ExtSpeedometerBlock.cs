@@ -95,11 +95,11 @@ namespace Logic.Blocks
             speedSlider.DisplayName = ">" + speedSlider.DisplayName;
         }
 
-        public Dictionary<string, object> GetV()
+        public Dictionary<string, object> GetV(CpuBlock cpu)
         {
             Vector3 myV = Rigidbody.velocity;
             return new Dictionary<string, object> {
-                { "velocity", BlockUtils.Vec2Dict(myV) }
+                { "velocity", BlockUtils.Vec2Obj(cpu, myV) }
             };
         }
 
