@@ -28,8 +28,9 @@ namespace Jint.Native.Object
         {
             const PropertyFlag propertyFlags = PropertyFlag.Configurable | PropertyFlag.Writable;
             const PropertyFlag lengthFlags = PropertyFlag.Configurable;
-            var properties = new PropertyDictionary(8, checkExistingKeys: false)
+            var properties = new PropertyDictionary(9, checkExistingKeys: false)
             {
+                ["__proto__"] = new PropertyDescriptor(this, PropertyFlag.Configurable),
                 ["constructor"] = new PropertyDescriptor(_objectConstructor, propertyFlags),
                 ["toString"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "toString", ToObjectString, 0, lengthFlags), propertyFlags),
                 ["toLocaleString"] = new PropertyDescriptor(new ClrFunctionInstance(Engine, "toLocaleString", ToLocaleString, 0, lengthFlags), propertyFlags),
