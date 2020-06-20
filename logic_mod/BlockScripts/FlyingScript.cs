@@ -43,18 +43,20 @@ namespace Logic.BlockScripts
             if (!FPLogic.IsActive)
                 return;
 
+            // It seems that after last update FlyingController stopped using speedSlider.Value directly.
+            // And of course new field used - 'magnitude' - is private.
+            // Because we need to replace the original force, calculated from savedSpeed, by our new finalForce,
+            // we reimplement force calculations the same way as in game, subtract this force and pray
+            // this calculation will not change.
+            var originalForce = flyingController.flying ? CalculateForce(savedSpeed) : Vector3.zero;
+            flyingController.Rigidbody.AddForce(-originalForce);
+
             var floatValue = machineHandler.ReadValue(flyingController.FlyKey);
             if (floatValue != 0)
             {
                 floatValue = Mathf.Lerp(0, savedSpeed, floatValue);
-                // It seems that after last update FlyingController stopped using speedSlider.Value directly.
-                // And of course new field used - 'magnitude' - is private.
-                // Because we need to replace the original force, calculated from savedSpeed, by our new finalForce,
-                // we reimplement force calculations the same way as in game, subtract this force and pray
-                // this calculation will not change.
                 var finalForce = CalculateForce(floatValue);
-                var originalForce = CalculateForce(savedSpeed);
-                flyingController.Rigidbody.AddForce(-originalForce + finalForce);
+                flyingController.Rigidbody.AddForce(finalForce);
             }
         }
     }
