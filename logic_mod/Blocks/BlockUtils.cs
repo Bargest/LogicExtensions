@@ -51,7 +51,7 @@ namespace Logic.Blocks
             return TypeConverter.ToBoolean(arg);
         }
 
-        static string[] vecKeys = new[] { "x", "y", "z", "w" };
+        static string[] vecKeys = new[] { "x", "y", "z" };
         static string[] quatKeys = new[] { "x", "y", "z", "w" };
 
         public static Quaternion ToQuat(ObjectInstance obj)
