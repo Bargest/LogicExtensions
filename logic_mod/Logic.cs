@@ -487,6 +487,8 @@ namespace Logic
                     while (start >= 0 && text[start] != '\n')
                         --start;
                     ++start;
+                    if (end > start)
+                        --end;
                     while (end >= 0 && text[end] != '\n')
                         --end;
                     ++end;
