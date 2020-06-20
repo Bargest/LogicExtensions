@@ -45,7 +45,9 @@ namespace Logic
 
         public T Back()
         {
-            if (curPos == start)
+            if (end == start)
+                return null;
+            if (curPos - 1 == start)
                 return null;
             --curPos;
             if (curPos < 0)

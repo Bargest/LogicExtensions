@@ -449,7 +449,192 @@ namespace Logic
         }
 
         int lastKBFocus = -1;
-        
+
+        int lastEnterPos = -1;
+        bool blockingKeys = false;
+        void TextEditor(Event current)
+        {
+            GUI.SetNextControlName("codeInput");
+            if (GUI.GetNameOfFocusedControl() != "codeInput")
+            {
+                if (blockingKeys)
+                {
+                    blockingKeys = false;
+                    StatMaster.StopHotKeys(false);
+                }
+                return;
+            }
+
+            if (!blockingKeys)
+            {
+                blockingKeys = true;
+                StatMaster.StopHotKeys(true);
+            }
+
+            //if (lastKBFocus != GUIUtility.keyboardControl)
+            //    return;
+
+            if ((current.type == EventType.KeyDown || current.type == EventType.KeyUp) && current.isKey)
+            {
+                var te = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+                int start, end;
+                string text;
+                void PrepareForTab()
+                {
+                    start = Math.Min(te.cursorIndex, te.selectIndex);
+                    end = Math.Max(te.cursorIndex, te.selectIndex);
+                    text = te.text;
+                    while (start >= 0 && text[start] != '\n')
+                        --start;
+                    ++start;
+                    while (end >= 0 && text[end] != '\n')
+                        --end;
+                    ++end;
+                }
+                if ((current.keyCode == KeyCode.Tab || current.character == '\t'))
+                {
+                    if (current.type == EventType.KeyUp)
+                    {
+                        if (!current.shift)
+                        {
+                            if (!te.hasSelection)
+                            {
+                                for (var i = 0; i < 4; i++)
+                                    te.Insert(' ');
+
+                                editedScript = te.text;
+                            }
+                            else
+                            {
+                                PrepareForTab();
+                                var pos = start;
+                                while (pos <= end)
+                                {
+                                    text = text.Insert(pos, "    ");
+                                    end += 4;
+                                    if (pos == start)
+                                    {
+                                        if (te.cursorIndex < te.selectIndex)
+                                            te.cursorIndex += 4;
+                                        else
+                                            te.selectIndex += 4;
+                                    }
+                                    if (te.cursorIndex > te.selectIndex)
+                                        te.cursorIndex += 4;
+                                    else
+                                        te.selectIndex += 4;
+                                    while (pos < text.Length && text[pos] != '\n')
+                                        ++pos;
+                                    ++pos;
+                                }
+                                editedScript = text;
+                            }
+                        }
+                        else
+                        {
+                            PrepareForTab();
+                            if (te.cursorIndex < te.selectIndex)
+                                te.cursorIndex = start;
+                            else
+                                te.selectIndex = start;
+                            var pos = start;
+                            while (pos <= end)
+                            {
+                                int i;
+                                for (i = 0; i < 4; ++i)
+                                {
+                                    if (text[pos] != ' ')
+                                        break;
+                                    text = text.Remove(pos, 1);
+                                }
+                                end -= i;
+                                if (pos != end)
+                                {
+                                    if (te.cursorIndex > te.selectIndex)
+                                        te.cursorIndex -= i;
+                                    else
+                                        te.selectIndex -= i;
+                                }
+                                while (pos < text.Length && text[pos] != '\n')
+                                    ++pos;
+                                ++pos;
+                            }
+                            editedScript = text;
+                        }
+                        editHistory.Add(editedScript);
+                        UpdateScriptStatus(SelectedCpu.CheckScript(editedScript));
+                    }
+                    current.Use();
+                }
+                else if (current.keyCode == KeyCode.Return)
+                {
+                    if (current.type == EventType.keyDown)
+                    {
+                        lastEnterPos = Math.Min(te.cursorIndex, te.selectIndex) - 1;
+                    }
+                    else if (current.type == EventType.KeyUp && lastEnterPos >= 0)
+                    {
+                        text = te.text;
+                        start = lastEnterPos;
+                        lastEnterPos = -1;
+                        while (start >= 0 && text[start] != '\n')
+                            --start;
+                        ++start;
+                        int pos = start;
+                        while (pos < text.Length && text[pos] == ' ')
+                            ++pos;
+                        var spaceCount = pos - start;
+                        var spacing = text.Substring(start, spaceCount);
+                        text = text.Insert(te.cursorIndex, spacing);
+                        te.cursorIndex += spacing.Length;
+                        te.selectIndex = te.cursorIndex;
+                        editedScript = text;
+                        editHistory.Add(editedScript);
+                        UpdateScriptStatus(SelectedCpu.CheckScript(editedScript));
+                    }
+                    current.Use();
+                }
+                else if (current.keyCode == KeyCode.Z && current.control && current.type == EventType.KeyDown)
+                {
+                    var prev = editHistory.Back();
+                    if (prev != null && editedScript != prev)
+                    {
+                        var len = Math.Min(editedScript.Length, prev.Length);
+                        for (int i = 0; i < len; ++i)
+                        {
+                            if (editedScript[i] != prev[i])
+                            {
+                                te.selectIndex = te.cursorIndex = i;
+                                break;
+                            }
+                        }
+                        editedScript = prev;
+                        UpdateScriptStatus(SelectedCpu.CheckScript(editedScript));
+                    }
+                    current.Use();
+                }
+                else if (current.keyCode == KeyCode.Y && current.control && current.type == EventType.KeyDown)
+                {
+                    var prev = editHistory.Forward();
+                    if (prev != null)
+                    {
+                        var len = Math.Min(editedScript.Length, prev.Length);
+                        for (int i = 0; i < len; ++i)
+                        {
+                            if (editedScript[i] != prev[i])
+                            {
+                                te.selectIndex = te.cursorIndex = i;
+                                break;
+                            }
+                        }
+                        editedScript = prev;
+                        UpdateScriptStatus(SelectedCpu.CheckScript(editedScript));
+                    }
+                    current.Use();
+                }
+            }
+        }
+
         void GuiFunc(int id)
         {
             if (SelectedCpu == null)
@@ -488,72 +673,10 @@ namespace Logic
             }
 
             var current = Event.current;
-            GUI.SetNextControlName("codeInput");
-            if (GUI.GetNameOfFocusedControl() == "codeInput" && lastKBFocus == GUIUtility.keyboardControl)
-            {
-                if ((current.type == EventType.KeyDown || current.type == EventType.KeyUp) && current.isKey)
-                {
-                    if ((current.keyCode == KeyCode.Tab || current.character == '\t'))
-                    {
-                        if (current.type == EventType.KeyUp)
-                        {
-                            var te = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
-                            if (!current.shift)
-                            {
-                                for (var i = 0; i < 4; i++)
-                                    te.Insert(' ');
-                            }
-                            else
-                            {
-                                var min = Math.Min(te.cursorIndex, te.selectIndex);
-                                var index = min;
-                                var temp = te.text;
-                                for (var i = 1; i < 5; i++)
-                                {
-                                    if ((min - i) < 0 || temp[min - i] != ' ')
-                                        break;
-                                    index = min - i;
-                                }
-
-                                if (index < min)
-                                {
-                                    te.selectIndex = index;
-                                    te.cursorIndex = min;
-                                    te.ReplaceSelection(string.Empty);
-                                }
-                            }
-                            editedScript = te.text;
-                            editHistory.Add(editedScript);
-                            UpdateScriptStatus(SelectedCpu.CheckScript(editedScript));
-                        }
-                        current.Use();
-                    }
-                    else if (current.keyCode == KeyCode.Z && current.control && current.type == EventType.KeyDown)
-                    {
-                        var prev = editHistory.Back();
-                        if (prev != null)
-                        {
-                            editedScript = prev;
-                            UpdateScriptStatus(SelectedCpu.CheckScript(editedScript));
-                        }
-                        current.Use();
-                    }
-                    else if (current.keyCode == KeyCode.Y && current.control && current.type == EventType.KeyDown)
-                    {
-                        var prev = editHistory.Forward();
-                        if (prev != null)
-                        {
-                            editedScript = prev;
-                            UpdateScriptStatus(SelectedCpu.CheckScript(editedScript));
-                        }
-                        current.Use();
-                    }
-                }
-            }
-
+            TextEditor(current);
             editedScript = GUILayout.TextArea(editedScript, textStyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
 
-            if (GUI.GetNameOfFocusedControl() == "codeInput" && current.type == EventType.KeyDown || current.type == EventType.KeyUp)
+            if (GUI.GetNameOfFocusedControl() == "codeInput" && (current.type == EventType.KeyDown || current.type == EventType.KeyUp))
                 lastKBFocus = GUIUtility.keyboardControl;
 
             GUILayout.EndScrollView();
