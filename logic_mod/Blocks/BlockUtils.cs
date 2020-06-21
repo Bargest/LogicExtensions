@@ -28,7 +28,7 @@ namespace Logic.Blocks
                 return false;
             }
             return true;
-           
+
         }
 
         public static bool TryGetLong(JsValue arg, out long value)
@@ -74,12 +74,8 @@ namespace Logic.Blocks
 
         public static JsValue Vec2Obj(CpuBlock b, Vector3 v)
         {
-            return JsValue.FromObject(b.Interp, new Dictionary<string, object>
-            {
-                { "x", v.x },
-                { "y", v.y },
-                { "z", v.z }
-            });
+            var vec3 = b.Interp.Global.Get(CpuVector3.Name) as IConstructor;
+            return vec3.Construct(new JsValue[] { v.x, v.y, v.z }, null);
         }
     }
 }

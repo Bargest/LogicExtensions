@@ -65,7 +65,7 @@ namespace Logic.Blocks.Api
             return RootApi.Values.Select(x => x.ToString())
                 .Concat(ApiNamespaces.SelectMany(x => new[] { $"{x.Key} module:" }
                             .Concat(
-                                x.Value.StaticFields?.Select(y => x.Key+"."+y.ToString()) ?? new string[0]
+                                x.Value.StaticFields?.Select(y => x.Key + "." + y.ToString()) ?? new string[0]
                             ).Append("instance fields:")
                             .Concat(
                                 x.Value.InstanceFields?.Select(y => y.ToString()) ?? new string[0]
@@ -79,6 +79,7 @@ namespace Logic.Blocks.Api
             RootApi = new CpuRoot().StaticFields.ToDictionary(x => x.Name, x => x as CpuApiFunc);
             AddNamespace("MathExt", new CpuMathExt());
             AddNamespace(CpuQuaternion.Name, new CpuQuaternion());
+            AddNamespace(CpuVector3.Name, new CpuVector3());
             //AddNamespace("Object", new CpuObject());
         }
 
