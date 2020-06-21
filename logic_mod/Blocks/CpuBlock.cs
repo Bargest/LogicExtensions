@@ -328,26 +328,7 @@ namespace Logic.Blocks
             }
             return null;
         }
-
-        public JsValue Int(JsValue ctx, JsValue[] x)
-        {
-            if (x.Length < 1 || !TryGetLong(x[0], out long v))
-                throw new Exception("Invalid value");
-            return v;
-        }
-        public JsValue Float(JsValue ctx, JsValue[] x)
-        {
-            if (x.Length < 1 || !TryGetFloat(x[0], out float v))
-                throw new Exception("Invalid value");
-            return v;
-        }
-        public JsValue Str(JsValue ctx, JsValue[] x)
-        {
-            if (x.Length < 1)
-                throw new Exception("Invalid value");
-            return x[0]?.ToString();
-        }
-        
+                
         public void Cli(JsValue thiz, JsValue[] x)
         {
             Cli();

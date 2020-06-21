@@ -28,7 +28,7 @@ namespace Logic.Blocks.Api
         public void Attach(CpuBlock block)
         {
             foreach (var api in RootApi)
-                block.Interp.SetValue(api.Key, api.Value.ImplementationFactory(block));
+                block.Interp.SetValue(api.Key, (t, a) => api.Value.Implementation(block, t, a));
 
             foreach (var kp in ApiNamespaces)
             {

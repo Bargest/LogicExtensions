@@ -46,10 +46,7 @@ namespace Logic.Blocks.Api
                 foreach (var kp in Props)
                 {
                     if (kp.Value is CpuApiFunc f)
-                    {
-                        var impl = f.ImplementationFactory(cpu);
-                        properties[kp.Key] = new PropertyDescriptor(new ClrFunctionInstance(Engine, kp.Key, (t, a) => ApiObjectConstructor.WrappedApi(t, a, impl), f.Arguments.Count, PropertyFlag.Configurable), propertyFlags);
-                    }
+                        properties[kp.Key] = new PropertyDescriptor(new ClrFunctionInstance(Engine, kp.Key, (t, a) => _constructor.WrappedApi(t, a, f.Implementation), f.Arguments.Count, PropertyFlag.Configurable), propertyFlags);
                     else if (kp.Value is CpuApiValue v)
                         properties[kp.Key] = new PropertyDescriptor(v.Value, PropertyFlag.Configurable | PropertyFlag.Writable);
                 }
@@ -67,7 +64,7 @@ namespace Logic.Blocks.Api
 
         private Dictionary<string, CpuApiProperty> Props;
 
-        Func<JsValue, JsValue[], JsValue> Constructor;
+        Func<CpuBlock, JsValue, JsValue[], JsValue> Constructor;
 
         public static ApiObjectConstructor CreateApiConstructor(CpuBlock cpu, string name, List<CpuApiProperty> staticProps, List<CpuApiProperty> instanceProps)
         {
@@ -80,11 +77,11 @@ namespace Logic.Blocks.Api
             return obj;
         }
 
-        public static JsValue WrappedApi(JsValue t, JsValue[] a, Func<JsValue, JsValue[], JsValue> impl)
+        public JsValue WrappedApi(JsValue t, JsValue[] a, Func<CpuBlock, JsValue, JsValue[], JsValue> impl)
         {
             try
             {
-                return impl(t, a);
+                return impl(cpu, t, a);
             }
             catch (Exception e)
             {
@@ -106,12 +103,9 @@ namespace Logic.Blocks.Api
                     if (kp.Value is CpuApiFunc f)
                     {
                         if (f.Name == ConstructorMethodName)
-                            Constructor = f.ImplementationFactory(cpu);
+                            Constructor = f.Implementation;
                         else
-                        {
-                            var impl = f.ImplementationFactory(cpu);
-                            properties[kp.Key] = new PropertyDescriptor(new ClrFunctionInstance(Engine, kp.Key, (t, a) => WrappedApi(t, a, impl), f.Arguments.Count, PropertyFlag.Configurable), PropertyFlag.Configurable);
-                        }
+                            properties[kp.Key] = new PropertyDescriptor(new ClrFunctionInstance(Engine, kp.Key, (t, a) => WrappedApi(t, a, f.Implementation), f.Arguments.Count, PropertyFlag.Configurable), PropertyFlag.Configurable);
                     }
                     else if (kp.Value is CpuApiValue v)
                         properties[kp.Key] = new PropertyDescriptor(v.Value, PropertyFlag.Configurable);
@@ -135,7 +129,7 @@ namespace Logic.Blocks.Api
                 _prototype = PrototypeObject
             };
 
-            Constructor?.Invoke(obj, arguments);
+            Constructor?.Invoke(cpu, obj, arguments);
             return obj;
         }
     }

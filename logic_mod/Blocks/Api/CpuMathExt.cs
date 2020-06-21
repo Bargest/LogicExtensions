@@ -27,7 +27,7 @@ namespace Logic.Blocks.Api
                     { "rtol", new ArgInfo("flot", "(optional) Tolerance (relative) for termination.") },
                     { "full_output", new ArgInfo("bool", "(optional) Return just value (false) or object description (true).") }
                 },
-                (c) => ((JsValue ctx, JsValue[] x) => Newton(c.Interp, ctx, x))
+                Newton
             ),
         };
 
@@ -72,8 +72,9 @@ namespace Logic.Blocks.Api
         //      If `full_output` is false (default), the root is returned.
         //      If true, the dictionary {{"root": root}, {"converged": true/false},
         //      {"iter": numIter}} is returned.
-        public JsValue Newton(Engine eng, JsValue ctx, JsValue[] x)
+        public JsValue Newton(CpuBlock cpu, JsValue ctx, JsValue[] x)
         {
+            var eng = cpu.Interp;
             int l = x.Length;
 
             // Arguments and their default values:

@@ -23,11 +23,11 @@ namespace Logic.Blocks.Api
                 new Dictionary<string, ArgInfo>{
                     { "b", new ArgInfo("Quaternion", "quaternion or vector to multiply") }
                 },
-                (c) => (t, x) => QuatMult(c, t, x)
+                QuatMult
             ),
             new CpuApiFunc("inv", false, "inverse of quaternion",
                 new Dictionary<string, ArgInfo> { },
-                (c) => (t, x) => QuatInv(c, t, x)
+                QuatInv
             ),
         };
         public override List<CpuApiProperty> StaticFields => new List<CpuApiProperty>
@@ -39,11 +39,11 @@ namespace Logic.Blocks.Api
                     { "z", new ArgInfo("float", "z coord") },
                     { "w", new ArgInfo("float", "w coord") }
                 },
-                (c) => CreateThis
+                CreateThis
             )
         };
 
-        public JsValue CreateThis(JsValue thizArg, JsValue[] args)
+        public JsValue CreateThis(CpuBlock c, JsValue thizArg, JsValue[] args)
         {
             var thiz = ((ObjectInstance)thizArg);
             var instf = InstanceFields;

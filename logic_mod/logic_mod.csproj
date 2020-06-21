@@ -65,6 +65,7 @@
     <Compile Include="Blocks\Api\CpuMathExt.cs" />
     <Compile Include="Blocks\Api\ApiObjectConstructor.cs" />
     <Compile Include="Blocks\Api\CpuRoot.cs" />
+    <Compile Include="Blocks\Api\CpuVector3.cs" />
     <Compile Include="Blocks\BlockUtils.cs" />
     <Compile Include="Blocks\Api\CpuApi.cs" />
     <Compile Include="Blocks\CpuBlock.cs" />

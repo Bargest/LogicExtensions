@@ -21,8 +21,8 @@ namespace Logic.Blocks.Api
     }
     public struct ArgInfo
     {
-        public string Type;
-        public string Info;
+        public readonly string Type;
+        public readonly string Info;
 
         public ArgInfo(string t, string i)
         {
@@ -33,8 +33,8 @@ namespace Logic.Blocks.Api
 
     public class CpuApiValue : CpuApiProperty
     {
-        public JsValue Value;
-        public ArgInfo Info;
+        public readonly JsValue Value;
+        public readonly ArgInfo Info;
         public CpuApiValue(string n, JsValue v, ArgInfo i) : base(n)
         {
             Value = v;
@@ -48,37 +48,34 @@ namespace Logic.Blocks.Api
 
     public class CpuApiFunc : CpuApiProperty
     {
-        public bool Sync;
-        public string Help;
-        public Dictionary<string, ArgInfo> Arguments;
-        public Func<CpuBlock, Func<JsValue, JsValue[], JsValue>> ImplementationFactory;
+        public readonly bool Sync;
+        public readonly string Help;
+        public readonly Dictionary<string, ArgInfo> Arguments;
+        public readonly Func<CpuBlock, JsValue, JsValue[], JsValue> Implementation;
 
-        public CpuApiFunc(string n, bool sync, string h, Dictionary<string, ArgInfo> args, Func<CpuBlock, Action<JsValue, JsValue[]>> impl)
-            : this(n, sync, h, args, (c) =>
+        public CpuApiFunc(string n, bool sync, string h, Dictionary<string, ArgInfo> args, Action<CpuBlock, JsValue, JsValue[]> impl)
+            : this(n, sync, h, args, (c, t, a) =>
             {
-                var m = impl(c);
-                return (thiz, x) => { m(thiz, x); return null; };
+                impl(c, t, a);
+                return null;
             })
         {
 
         }
 
-        public CpuApiFunc(string n, bool sync, string h, Dictionary<string, ArgInfo> args, Func<CpuBlock, Func<JsValue, JsValue[], JsValue>> impl)
+        public CpuApiFunc(string n, bool sync, string h, Dictionary<string, ArgInfo> args, Func<CpuBlock, JsValue, JsValue[], JsValue> impl)
             : base(n)
         {
             Help = h;
             Sync = sync;
             if (!Sync)
-                ImplementationFactory = impl;
+                Implementation = impl;
             else
-                ImplementationFactory = (c) =>
+                Implementation = (c, t, a) =>
                 {
-                    var m = impl(c);
-                    return (thiz, x) => {
-                        JsValue result = null;
-                        c.Interp.Executor.PauseThread((state) => result = m(thiz, x), null);
-                        return result;
-                    };
+                    JsValue result = null;
+                    c.Interp.Executor.PauseThread((state) => result = impl(c, t, a), null);
+                    return result;
                 };
             Arguments = args;
         }

@@ -22,29 +22,29 @@ namespace Logic.Blocks.Api
                 new Dictionary<string, ArgInfo>{
                     { "v", new ArgInfo("Vector3", "rhs Vector3 to add") }
                 },
-                (c) => (t, x) => VecAdd(c, t, x)
+                VecAdd
             ),
             new CpuApiFunc("mul", false, "multiply vector by scalalr",
                 new Dictionary<string, ArgInfo>{
                     { "c", new ArgInfo("float", "scalar to multiply") }
                 },
-                (c) => (t, x) => VecMul(c, t, x)
+                VecMul
             ),
             new CpuApiFunc("dot", false, "dot product of two 3d vectors",
                 new Dictionary<string, ArgInfo>{
                     { "v", new ArgInfo("Vector3", "rhs Vector3 in product") }
                 },
-                (c) => (t, x) => VecDot(c, t, x)
+                VecDot
             ),
             new CpuApiFunc("cross", false, "cross product of two 3d vectors",
                 new Dictionary<string, ArgInfo>{
                     { "v", new ArgInfo("Vector3", "rhs Vector3 in product") }
                 },
-                (c) => (t, x) => VecCross(c, t, x)
+                VecCross
             ),
-            new CpuApiFunc("magnitude", false, "magnitude of vector 3",
+            new CpuApiFunc("magnitude", false, "magnitude of 3d vector",
                 new Dictionary<string, ArgInfo> { },
-                (c) => (t, x) => VecMag(c, t, x)
+                VecMag
             ),
         };
         public override List<CpuApiProperty> StaticFields => new List<CpuApiProperty>
@@ -55,11 +55,11 @@ namespace Logic.Blocks.Api
                     { "y", new ArgInfo("float", "y coord") },
                     { "z", new ArgInfo("float", "z coord") }
                 },
-                (c) => CreateThis
+                CreateThis
             )
         };
 
-        public JsValue CreateThis(JsValue thizArg, JsValue[] args)
+        public JsValue CreateThis(CpuBlock c, JsValue thizArg, JsValue[] args)
         {
             var thiz = ((ObjectInstance)thizArg);
             var instf = InstanceFields;
