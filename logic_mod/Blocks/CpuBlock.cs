@@ -645,7 +645,7 @@ namespace Logic.Blocks
             InputController = input;
             foreach (var key in PIO.Values)
             {
-                foreach (var kc in key.ResolveKeys().Where(x => x <= MExtKey.MaxKey).Select(x => (KeyCode)x))
+                foreach (var kc in key.ResolveKeys().Where(x => MExtKey.KnownKeys.Contains(x)).Select(x => (KeyCode)x))
                 {
                     input.AddMKey(BlockBehaviour, key, kc);
                     input.Add(kc);

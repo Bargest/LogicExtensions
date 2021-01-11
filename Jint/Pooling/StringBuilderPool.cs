@@ -21,6 +21,7 @@ namespace Jint.Pooling
         public static BuilderWrapper Rent()
         {
             var builder = _pool.Allocate();
+            builder.Length = 0;
             return new BuilderWrapper(builder, _pool);
         }
 

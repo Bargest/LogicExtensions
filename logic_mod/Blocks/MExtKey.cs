@@ -10,8 +10,8 @@ namespace Logic.Blocks
     public class MExtKey : MKey
     {
         public const KeyCode KeyPlaceHolder = KeyCode.Break;
-        public static uint MaxKey = (uint)Enum.GetValues(typeof(KeyCode)).Cast<KeyCode>().Max();
-
+        public readonly static HashSet<uint> KnownKeys = new HashSet<uint>(Enum.GetValues(typeof(KeyCode)).Cast<KeyCode>().Select(x => (uint)x));
+        
         public BlockBehaviour Parent { get; private set; }
         public MText Text;
         public Dictionary<int, uint> UpdatedKeyCodes = new Dictionary<int, uint>();
@@ -89,7 +89,7 @@ namespace Logic.Blocks
                 freezeUpdate = true; // prevent recursion! Or we will get loop as Text.Change -> Key.Change -> Text.Change -> ...
                 foreach (var val in ParseText(value, origKeys))
                 {
-                    if (val <= MaxKey)
+                    if (KnownKeys.Contains(val))
                     {
                         var id = AddKey((KeyCode)val);
                         UpdatedKeyCodes.Remove(id);
@@ -131,7 +131,7 @@ namespace Logic.Blocks
 
         public string SerializeKey(uint x)
         {
-            if (x > MaxKey)
+            if (!KnownKeys.Contains(x))
                 return x.ToString();
             try
             {
@@ -200,7 +200,7 @@ namespace Logic.Blocks
             // replace bad keys
             for (int i = 0; i < keyArray.Length; ++i)
             {
-                if (uint.TryParse(keyArray[i], out uint keyId) && keyId > MaxKey)
+                if (uint.TryParse(keyArray[i], out uint keyId) && !KnownKeys.Contains(keyId))
                     newKeyArray[i] = KeyCodeConverter.GetKey(KeyPlaceHolder);
                 else
                     newKeyArray[i] = keyArray[i];
@@ -210,7 +210,7 @@ namespace Logic.Blocks
             for (int i = 0; i < keyArray.Length; ++i)
             {
                 var key = keyArray[i];
-                if (!uint.TryParse(key, out uint extKey) || extKey < MaxKey)
+                if (!uint.TryParse(key, out uint extKey) || KnownKeys.Contains(extKey))
                     continue;
 
                 UpdatedKeyCodes[i] = extKey;
