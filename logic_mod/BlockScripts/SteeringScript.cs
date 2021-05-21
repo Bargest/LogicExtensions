@@ -107,7 +107,11 @@ namespace Logic.BlockScripts
             float maxDelta = Time.deltaTime * 100f * speed;
             var num = Mathf.MoveTowards(steeringWheel.AngleToBe, targetAngle, maxDelta);
             steeringWheel.AngleToBe = num;
-            steeringWheel.SpeedSlider.Value = 0;
+            steeringWheel.SpeedSlider.Value = 0;    // this functionally disables FixedUpdateBlock of SteeringWheel
+
+            var connectedBody = steeringWheel?.blockJoint?.connectedBody;
+            if (connectedBody != null && connectedBody.IsSleeping())
+                connectedBody.WakeUp();
 
             jointEulerRotation.x = steeringWheel.axis.x * num;
             jointEulerRotation.y = steeringWheel.axis.y * num;
