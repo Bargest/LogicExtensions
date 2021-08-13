@@ -86,7 +86,10 @@ namespace Jint.Runtime.References
 
         internal void InitializeReferencedBinding(JsValue value)
         {
-            ((EnvironmentRecord) _baseValue).InitializeBinding(TypeConverter.ToString(_property), value);
+            var prop = TypeConverter.ToString(_property);
+            if (_baseValue == JsValue.Undefined)
+                throw new JavaScriptException(new JsString($"Cannot assign to undefined variable '{prop}' using pattern assignment"));
+            ((EnvironmentRecord) _baseValue).InitializeBinding(prop, value);
         }
     }
 }
