@@ -271,14 +271,34 @@ namespace Logic.Blocks
             }
         }
 
-        public bool Holding()
+        float fixedTime;
+        bool wasEmulating, temp;
+
+        public bool EmuHeld()
         {
-            return IsHeld || (ResolveKeys().Any(x => MachineEmulating(x) > 0));
+            return (ResolveKeys().Any(x => MachineEmulating(x) > 0));
         }
-        public bool Pressed()
+
+        public bool CheckEmulation(bool condition, bool lastCondition)
         {
-            return IsPressed || (ResolveKeys().Any(x => MachineEmulating(x) > 0));
+            if (fixedTime != Time.fixedTime)
+            {
+                wasEmulating = temp;
+                fixedTime = Time.fixedTime;
+            }
+            temp = EmuHeld();
+            if (temp == condition && wasEmulating == lastCondition)
+            {
+                return true;
+            }
+            return false;
         }
+
+        public bool EmuPressed()
+        {
+            return CheckEmulation(true, false);
+        }
+
     }
 
 }

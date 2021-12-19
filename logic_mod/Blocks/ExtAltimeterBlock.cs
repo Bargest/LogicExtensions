@@ -113,12 +113,6 @@ namespace Logic.Blocks
 
         public override void EmulationUpdateBlock()
         {
-            // We remove the following code, because emulations via ExtKeys are supposed to look as much 'native' as possible
-            /*
-              emuActivatePressed = activateKey.EmulationPressed();
-              emuActivateHeld = activateKey.EmulationHeld(includePressed: true);
-              UpdateIsDetectingState(emuActivatePressed, emuActivateHeld || activateHeld);
-            */
         }
 
         public override void UpdateBlock()
@@ -138,9 +132,9 @@ namespace Logic.Blocks
                 return;
             }
 
-            activatePressed = MActivateKey.Pressed();
-            activateHeld = MActivateKey.Holding();
-            UpdateIsDetectingState(activatePressed, activateHeld /*|| emuActivateHeld*/); // we removed emuActivateHeld intentionally
+            activatePressed = MActivateKey.IsPressed;
+            activateHeld = MActivateKey.IsHeld;
+            UpdateIsDetectingState(activatePressed, emuActivateHeld || activateHeld);
 
             float targetHeiht, curHeight;
             if (MaxHeigthSlider.Value <= heightSlider.Value)
@@ -157,6 +151,7 @@ namespace Logic.Blocks
             }
 
             AnimateHand(curHeight, targetHeiht, isDetecting);
+
             detectedOnceForThisFrame = false;
         }
         private void UpdateIsDetectingState(bool pressed, bool held)
@@ -211,6 +206,11 @@ namespace Logic.Blocks
             {
                 return;
             }
+
+            emuActivatePressed = MActivateKey.EmuPressed();
+            emuActivateHeld = MActivateKey.EmuHeld();
+            UpdateIsDetectingState(emuActivatePressed, emuActivateHeld || activateHeld);
+
             float outValue;
             if (!isDetecting)
             {

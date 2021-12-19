@@ -118,7 +118,7 @@ namespace Logic.Blocks
                 ToggleLED(1);
         }
 
-        bool A, B, aToggled, bToggled, aHeld, bHeld, aPressed, bPressed;//, emuAPressed, emuBPressed, emuAHeld, emuBHeld
+        bool A, B, aToggled, bToggled, aHeld, bHeld, aPressed, bPressed, emuAPressed, emuBPressed, emuAHeld, emuBHeld;
         private void UpdateState(bool pressedA, bool pressedB, bool heldA, bool heldB)
         {
             A = heldA;
@@ -152,17 +152,9 @@ namespace Logic.Blocks
             // placeholder to remove parent call
         }
 
-        public override void FixedUpdateBlock()
+        private void MergeState(bool pressedA, bool pressedB, bool heldA, bool heldB)
         {
-            if (Time.timeScale == 0f)
-                return;
-
-            aPressed = MAKey.Pressed();
-            bPressed = MBKey.Pressed();
-            aHeld = MAKey.Holding();
-            bHeld = MBKey.Holding();
-            //UpdateState(aPressed, bPressed, aHeld || emuAHeld, bHeld || emuBHeld);
-            UpdateState(aPressed, bPressed, aHeld, bHeld);
+            UpdateState(pressedA, pressedB, heldA, heldB);
             if (A)
                 leaverA.localRotation = Quaternion.Euler(0f, 0f, -90f);
             else
@@ -200,9 +192,29 @@ namespace Logic.Blocks
             SetEmulation(result ? 1 : 0);
         }
 
+        public override void FixedUpdateBlock()
+        {
+            if (Time.timeScale == 0f)
+                return;
+
+            emuAPressed = MAKey.EmuPressed();
+            emuBPressed = MBKey.EmuPressed();
+            emuAHeld = MAKey.EmuHeld();
+            emuBHeld = MBKey.EmuHeld();
+            MergeState(emuAPressed, emuBPressed, aHeld || emuAHeld, bHeld || emuBHeld);
+        }
+
+        // we have to check keys in UpdateBlock, not in FixedUpdateBlock - otherwise .Pressed() not always works
         public override void UpdateBlock()
         {
-            // base.UpdateBlock();   
+            if (Time.timeScale == 0f)
+                return;
+
+            aPressed = MAKey.IsPressed;
+            bPressed = MBKey.IsPressed;
+            aHeld = MAKey.IsHeld;
+            bHeld = MBKey.IsHeld;
+            MergeState(aPressed, bPressed, aHeld | emuAHeld, bHeld | emuBHeld);
         }
 
         protected override void OnDisable()

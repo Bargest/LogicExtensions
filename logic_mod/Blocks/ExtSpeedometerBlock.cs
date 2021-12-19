@@ -132,9 +132,6 @@ namespace Logic.Blocks
 
         public override void EmulationUpdateBlock()
         {
-            //emuActivatePressed = activateKey.EmulationPressed();
-            //emuActivateHeld = activateKey.EmulationHeld(includePressed: true);
-            //UpdateIsDetectingState(emuActivatePressed, emuActivateHeld || activateHeld);
         }
 
         public override void UpdateBlock()
@@ -149,9 +146,9 @@ namespace Logic.Blocks
                 detectedOnceForThisFrame = true;
                 return;
             }
-            activatePressed = MActivateKey.Pressed();
-            activateHeld = MActivateKey.Holding();
-            UpdateIsDetectingState(activatePressed, activateHeld /*|| emuActivateHeld*/);
+            activatePressed = MActivateKey.IsPressed;
+            activateHeld = MActivateKey.IsHeld;
+            UpdateIsDetectingState(activatePressed, activateHeld || emuActivateHeld);
             if (noRigidbody)
             {
                 Vector3 position = VisualController.MeshFilter.transform.position;
@@ -211,6 +208,11 @@ namespace Logic.Blocks
             {
                 return;
             }
+            
+            emuActivatePressed = MActivateKey.EmuPressed();
+            emuActivateHeld = MActivateKey.EmuHeld();
+            UpdateIsDetectingState(emuActivatePressed, emuActivateHeld || activateHeld);
+
             if (!isDetecting)
             {
                 StopEmulation();
