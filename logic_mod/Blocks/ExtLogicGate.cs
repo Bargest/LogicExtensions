@@ -119,24 +119,7 @@ namespace Logic.Blocks
         }
 
         bool A, B, aToggled, bToggled, aHeld, bHeld, aPressed, bPressed, emuAPressed, emuBPressed, emuAHeld, emuBHeld;
-        private void UpdateState(bool pressedA, bool pressedB, bool heldA, bool heldB)
-        {
-            A = heldA;
-            B = heldB;
-            if (ToggledInput.IsActive)
-            {
-                if (pressedA)
-                {
-                    aToggled = !aToggled;
-                }
-                if (pressedB)
-                {
-                    bToggled = !bToggled;
-                }
-                A = aToggled;
-                B = bToggled;
-            }
-        }
+        public int counter, lastCount;
 
         public override void EmulationUpdateBlock()
         {
@@ -154,19 +137,59 @@ namespace Logic.Blocks
 
         private void MergeState(bool pressedA, bool pressedB, bool heldA, bool heldB)
         {
-            UpdateState(pressedA, pressedB, heldA, heldB);
-            if (A)
-                leaverA.localRotation = Quaternion.Euler(0f, 0f, -90f);
-            else
-                leaverA.localRotation = Quaternion.Euler(0f, 0f, 0f);
-            if ((gateType != 0 && B) || (gateType == GateType.NOT && A))
-                leaverB.localRotation = Quaternion.Euler(0f, 0f, -90f);
-            else
-                leaverB.localRotation = Quaternion.Euler(0f, 0f, 0f);
-
+            A = heldA;
+            B = heldB;
             bool result = false;
+
+            if (gateType < GateType.Random)
+            {
+                if (ToggledInput.IsActive)
+                {
+                    if (pressedA)
+                        aToggled = !aToggled;
+                    if (pressedB)
+                        bToggled = !bToggled;
+                    A = aToggled;
+                    B = bToggled;
+                }
+                if (gateType == GateType.NOT)
+                    B = A;
+            }
+
             switch (gateType)
             {
+                case GateType.Random:
+                    if (pressedA)
+                        aToggled = UnityEngine.Random.Range(0f, 1f) >= 0.5f;
+                    A = (B = heldA && !pressedA);
+                    result = aToggled;
+                    break;
+                case GateType.SRLatch:
+                    result = aToggled;
+                    if (!result && (pressedA || heldA))
+                        result = true;
+                    if (result && (pressedB || heldB))
+                        result = false;
+                    aToggled = result;
+                    break;
+                case GateType.DLatch:
+                    if (pressedB || heldB)
+                        aToggled = pressedA || heldA;
+                    result = aToggled;
+                    break;
+                case GateType.Counter:
+                    if (pressedB)
+                        counter = 0;
+                    if (pressedA)
+                    {
+                        lastCount = counter;
+                        counter++;
+                    }
+                    counter %= 4;
+                    A = counter % 2 == 1;
+                    B = counter > 1;
+                    result = counter == 0 && lastCount == 3;
+                    break;
                 case GateType.NOT:
                     result = (!A);
                     break;
@@ -176,11 +199,11 @@ namespace Logic.Blocks
                 case GateType.OR:
                     result = (A || B);
                     break;
-                case GateType.NAND:
-                    result = (!A || !B);
-                    break;
                 case GateType.NOR:
                     result = (!A && !B);
+                    break;
+                case GateType.NAND:
+                    result = (!A || !B);
                     break;
                 case GateType.XOR:
                     result = (A != B);
@@ -189,6 +212,7 @@ namespace Logic.Blocks
                     result = (A == B);
                     break;
             }
+
             SetEmulation(result ? 1 : 0);
         }
 
@@ -214,7 +238,15 @@ namespace Logic.Blocks
             bPressed = MBKey.IsPressed;
             aHeld = MAKey.IsHeld;
             bHeld = MBKey.IsHeld;
-            MergeState(aPressed, bPressed, aHeld | emuAHeld, bHeld | emuBHeld);
+            MergeState(aPressed, bPressed, aHeld || emuAHeld, bHeld || emuBHeld);
+            if (A)
+                leaverA.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            else
+                leaverA.localRotation = Quaternion.Euler(0f, 0f, 0f);
+            if ((gateType != 0 && B) || (gateType == GateType.NOT && A))
+                leaverB.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            else
+                leaverB.localRotation = Quaternion.Euler(0f, 0f, 0f);
         }
 
         protected override void OnDisable()
