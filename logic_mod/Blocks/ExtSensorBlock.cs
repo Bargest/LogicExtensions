@@ -87,10 +87,6 @@ namespace Logic.Blocks
             ModContext = SingleInstance<Logic>.Instance;
             machineHandler = ModContext.GetMachineHandler(this);
             base.Awake();
-            if (MEmulateKey.Text.DisplayName.Length > 8)
-                MEmulateKey.Text.DisplayName = "EMU";
-            AddText(MActivateKey.Text);
-            AddText(MEmulateKey.Text);
             LerpMode = AddToggle("Lerp", "lerp_mode", "output as linear interpolation to closest object", false);
         }
 
@@ -422,7 +418,7 @@ namespace Logic.Blocks
             MEmulateKey.SetKeycodes(input, machineHandler.IsAnyEmulating);
 
             machineHandler.AddExtKeyEmulator(MEmulateKey);
-            machineHandler.AddKey(input, this, MEmulateKey);
+            machineHandler.AddUpdatedKey(input, this, MEmulateKey);
         }
 
         private void Unregister()

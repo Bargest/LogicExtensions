@@ -86,11 +86,6 @@ namespace Logic.Blocks
             ModContext = SingleInstance<Logic>.Instance;
             machineHandler = ModContext.GetMachineHandler(this);
             base.Awake();
-            if (MEmulateKey.Text.DisplayName.Length > 8)
-                MEmulateKey.Text.DisplayName = "EMU";
-            AddText(MAKey.Text);
-            AddText(MBKey.Text);
-            AddText(MEmulateKey.Text);
         }
 
         public bool aToggleState, bToggleState;
@@ -262,7 +257,7 @@ namespace Logic.Blocks
             MEmulateKey.SetKeycodes(input, machineHandler.IsAnyEmulating);
 
             machineHandler.AddExtKeyEmulator(MEmulateKey);
-            machineHandler.AddKey(input, this, MEmulateKey);
+            machineHandler.AddUpdatedKey(input, this, MEmulateKey);
         }
 
         private void UnregisterExtLogicGate()

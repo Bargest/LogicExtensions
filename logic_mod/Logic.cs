@@ -278,9 +278,9 @@ namespace Logic
                         .ToDictionary(x => x.Key, x => x.SelectMany(y => machineHandler.GetMKeys(y.key).Select(z => new { y.block, key = z }))
                             .GroupBy(y => y.key).ToDictionary(y => y.Key, y => y.Select(z => z.block).ToList())
                         );
-            var inputs = keys.ContainsKey(0) ? keys[0] : new Dictionary<uint, List<BlockBehaviour>>();
-            var outputs = keys.ContainsKey(1) ? keys[1] : new Dictionary<uint, List<BlockBehaviour>>();
-            var fullIO = keys.ContainsKey(2) ? keys[2] : new Dictionary<uint, List<BlockBehaviour>>();
+            var inputs = keys.ContainsKey(0) ? keys[0] : new Dictionary<MappedKeyItem, List<BlockBehaviour>>();
+            var outputs = keys.ContainsKey(1) ? keys[1] : new Dictionary<MappedKeyItem, List<BlockBehaviour>>();
+            var fullIO = keys.ContainsKey(2) ? keys[2] : new Dictionary<MappedKeyItem, List<BlockBehaviour>>();
 
             inputs = inputs.Union(fullIO).GroupBy(x => x.Key).ToDictionary(x => x.Key, x => x.SelectMany(y => y.Value).Distinct().ToList());
             outputs = outputs.Union(fullIO).GroupBy(x => x.Key).ToDictionary(x => x.Key, x => x.SelectMany(y => y.Value).Distinct().ToList());
@@ -699,7 +699,7 @@ namespace Logic
                 foreach (var k in KeyTexts.Keys.ToArray())
                 {
                     var textChanged = k.GenerateText() != KeyTexts[k];
-                    k.Text_TextChanged(KeyTexts[k]);
+                    k.SetTextDirect(KeyTexts[k]);
                     KeyTexts[k] = k.GenerateText();
                     if (textChanged)
                         SelectedCpu.AfterEdit(k);

@@ -645,7 +645,7 @@ namespace Logic.Blocks
             InputController = input;
             foreach (var key in PIO.Values)
             {
-                foreach (var kc in key.ResolveKeys().Where(x => MExtKey.KnownKeys.Contains(x)).Select(x => (KeyCode)x))
+                foreach (var kc in key.ResolveKeys().Where(x => x.IsKey).Select(x => x.Key))
                 {
                     input.AddMKey(BlockBehaviour, key, kc);
                     input.Add(kc);
@@ -653,7 +653,7 @@ namespace Logic.Blocks
                 key.SetInputController(input);
                 key.SetKeycodes(input, machineHandler.IsAnyEmulating);
                 machineHandler.AddExtKeyEmulator(key);
-                machineHandler.AddKey(input, BlockBehaviour, key);
+                machineHandler.AddUpdatedKey(input, BlockBehaviour, key);
             }
         }
         private void UnregisterCpu()

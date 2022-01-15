@@ -21,13 +21,13 @@ namespace Logic
         }
 
         Logic ModContext;
-        public Dictionary<uint, HashSet<MExtKey>> AllGates;
+        public Dictionary<string, HashSet<MExtKey>> AllGates;
         Dictionary<BlockBehaviour, CpuBlock> CpuBlocks = new Dictionary<BlockBehaviour, CpuBlock>();
         KeyInputController KeyInput;
         Machine machine;
         DateTime lastGc;
 
-        Dictionary<uint, HashSet<MKey>> AllKeys;
+        Dictionary<string, HashSet<MKey>> AllKeys;
 
         public MachineHandler(Machine m)
         {
@@ -72,20 +72,29 @@ namespace Logic
                 );
         }
 
-        public void AddKey(KeyInputController input, BlockBehaviour extLogic, MExtKey key)
+        public void AddUpdatedKey(KeyInputController input, BlockBehaviour extLogic, MExtKey key)
         {
-            foreach (var kk in key.UpdatedKeyCodes)
-                input.AddMKey(extLogic, key, (KeyCode)kk.Value);
+            //foreach (var kk in key.UpdatedKeyCodes)
+            //    input.AddMKey(extLogic, key, (KeyCode)kk.Value);
+
+            // force add BOTH old key AND message
+            key.SetUseMessage(false);
+            foreach (var kk in key.ResolveKeys().Where(x => x.IsKey))
+                input.AddMKey(extLogic, key, kk.Key);
+            key.SetUseMessage(true);
+            input.AddMKey(extLogic, key, KeyCode.None);
+            key.RestoreSavedUseMessage();
         }
 
         public void AddExtKeyEmulator(MExtKey key)
         {
             foreach (var kk in key.ResolveKeys())
             {
-                if (!AllGates.ContainsKey(kk))
-                    AllGates[kk] = new HashSet<MExtKey>();
+                var ks = kk.ToString();
+                if (!AllGates.ContainsKey(ks))
+                    AllGates[ks] = new HashSet<MExtKey>();
 
-                AllGates[kk].Add(key);
+                AllGates[ks].Add(key);
             }
         }
 
@@ -100,36 +109,40 @@ namespace Logic
             return (CpuBlocks.ContainsKey(b) ? CpuBlocks[b] : null);
         }
 
-        private bool LegacyEmu(uint code)
+        private bool LegacyEmu(MappedKeyItem code)
         {
             // Check if specified code is emulated by any vanilla MKey in machine
             bool legacyEmu = false;
-            if (AllKeys.ContainsKey(code))
-                legacyEmu = AllKeys[code].Where(x => !(x is MExtKey) && x.isEmulator).Any(x => x.EmulationHeld(true));
+            var skey = code.ToString();
+            if (AllKeys.ContainsKey(skey))
+                legacyEmu = AllKeys[skey].Where(x => !(x is MExtKey) && x.isEmulator).Any(x => x.EmulationHeld(true));
             return legacyEmu;
         }
 
-        public float IsAnyEmulating(uint code)
+        public float IsAnyEmulating(MappedKeyItem code)
         {
             // If vanilla MKey emulates this code - return 1.0
             if (LegacyEmu(code))
                 return 1;
 
             // If no MExtKey is mapped to this code - return 0.0
-            if (!AllGates.ContainsKey(code))
+            var skey = code.ToString();
+            if (!AllGates.ContainsKey(skey))
                 return 0;
 
             // Get maximum value from MExtKeys, mapped to this code
-            return AllGates[code].Max(x => x.OutValue);
+            var res = AllGates[skey].Max(x => x.OutValue);
+            return res;
         }
 
-        public MExtKey GetExtEmulator(uint code)
+        public MExtKey GetExtEmulator(MappedKeyItem code)
         {
             // Get the "strongest" ExtKey, that is emulating current code
-            if (!AllGates.ContainsKey(code))
+            var skey = code.ToString();
+            if (!AllGates.ContainsKey(skey))
                 return null;
 
-            return AllGates[code].OrderByDescending(x => x.OutValue).FirstOrDefault();
+            return AllGates[skey].OrderByDescending(x => x.OutValue).FirstOrDefault();
         }
 
         public bool IsNativeHeld(MKey key)
@@ -150,18 +163,28 @@ namespace Logic
             return result;
         }
 
-        public IEnumerable<uint> GetMKeys(MKey key)
+        public IEnumerable<MappedKeyItem> GetMKeys(MKey key)
         {
             // Unified interface to get all Int codes from any Key and ExtKey
             if (key is MExtKey mk)
             {
-                for (int i = 0; i < key.KeysCount; ++i)
-                    yield return mk.ResolveKey(i);
+                //for (int i = 0; i < key.KeysCount; ++i)
+                //    yield return mk.ResolveKey(i);
+                foreach (var k in mk.ResolveKeys())
+                    yield return k;
             }
             else
             {
-                for (int i = 0; i < key.KeysCount; ++i)
-                    yield return (uint)key.GetKey(i);
+                if (key.useMessage)
+                {
+                    for (int i = 0; i < key.message.Length; ++i)
+                        yield return new MappedKeyItem(key.message[i]);
+                }
+                else
+                {
+                    for (int i = 0; i < key.KeysCount; ++i)
+                        yield return new MappedKeyItem(key.GetKey(i));
+                }
             }
         }
 
@@ -193,9 +216,9 @@ namespace Logic
 
         public void Start()
         {
-            AllGates = new Dictionary<uint, HashSet<MExtKey>>();
+            AllGates = new Dictionary<string, HashSet<MExtKey>>();
             AllKeys = GetKeys(machine.SimulationBlocks).SelectMany(x => GetMKeys(x.key).Select(y => new { x.key, code = y }))
-                .GroupBy(x => x.code, x => x.key).ToDictionary(x => x.Key, x => new HashSet<MKey>(x));
+                .GroupBy(x => x.code.ToString(), x => x.key).ToDictionary(x => x.Key, x => new HashSet<MKey>(x));
             KeyInput = machine.GetComponent<KeyInputController>();
             foreach (var block in machine.SimulationBlocks)
             {

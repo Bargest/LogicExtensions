@@ -88,10 +88,6 @@ namespace Logic.Blocks
             ModContext = SingleInstance<Logic>.Instance;
             machineHandler = ModContext.GetMachineHandler(this);
             base.Awake();
-            if (MEmulateKey.Text.DisplayName.Length > 8)
-                MEmulateKey.Text.DisplayName = "EMU";
-            AddText(MActivateKey.Text);
-            AddText(MEmulateKey.Text);
             MaxHeigthSlider = AddSliderUnclamped("<" + heightSlider.DisplayName, heightSlider.Key + "_2", 0.0f, 0.0f, 250f);
             heightSlider.DisplayName = ">" + heightSlider.DisplayName;
         }
@@ -245,7 +241,7 @@ namespace Logic.Blocks
             MEmulateKey.SetKeycodes(input, machineHandler.IsAnyEmulating);
 
             machineHandler.AddExtKeyEmulator(MEmulateKey);
-            machineHandler.AddKey(input, this, MEmulateKey);
+            machineHandler.AddUpdatedKey(input, this, MEmulateKey);
         }
 
         private void Unregister()
