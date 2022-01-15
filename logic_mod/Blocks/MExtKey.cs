@@ -171,6 +171,11 @@ namespace Logic.Blocks
             saveUseMessage = useMessage;
         }
 
+        public void InvertUseMessage()
+        {
+            useMessage = !useMessage;
+        }
+
         public void SetUseMessage(bool fl)
         {
             useMessage = fl;
@@ -227,9 +232,8 @@ namespace Logic.Blocks
             {
                 IAmEmulating = needEmulate;
                 // emulate both key and message via dirty hack
-                SetUseMessage(false);
                 InputController.Emulate(b, new MKey[0], this, needEmulate);
-                SetUseMessage(true);
+                InvertUseMessage();
                 InputController.Emulate(b, new MKey[0], this, needEmulate);
                 RestoreSavedUseMessage();
             }
@@ -237,6 +241,28 @@ namespace Logic.Blocks
 
         float fixedTime;
         bool wasEmulating, temp;
+
+        public new bool IsHeld
+        {
+            get {
+                var fl = base.IsHeld;
+                InvertUseMessage();
+                fl |= base.IsHeld;
+                RestoreSavedUseMessage();
+                return fl;
+            }
+        }
+        public new bool IsPressed
+        {
+            get
+            {
+                var fl = base.IsPressed;
+                InvertUseMessage();
+                fl |= base.IsPressed;
+                RestoreSavedUseMessage();
+                return fl;
+            }
+        }
 
         public bool EmuHeld()
         {
