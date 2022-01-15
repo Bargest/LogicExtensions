@@ -137,8 +137,9 @@ namespace Logic.Blocks
 
         public void CopyFrom(MExtKey other)
         {
-            // we blindly assume other.Text is correct
-            message = other.message;
+            // copy message
+            message = other.message.ToArray();
+            // copy keys
             while (KeysCount > 0)
                 RemoveKey(0);
             for (var k = 0; k < other.KeysCount; ++k)
@@ -150,17 +151,20 @@ namespace Logic.Blocks
             var strArr = (XStringArray)raw;
             var keyArray = (string[])strArr;
             var newKeyArray = new List<string>();
-            var msgs = new List<string>();
+            var oldIntKeys = new List<string>();
             for (int i = 0; i < keyArray.Length; ++i)
             {
+                // convert old int keys to message
                 if (uint.TryParse(keyArray[i], out uint keyId) && keyId > KnownKeys.Max())
-                    msgs.Add(keyArray[i]);
-                else 
+                    oldIntKeys.Add(keyArray[i]);
+                else
                     newKeyArray.Add(keyArray[i]);
             }
 
-            if (msgs.Count > 0)
-                newKeyArray.Add("Message=" + string.Join(";", msgs.ToArray()));
+            // Add Message=1000;1001... item if old mod int keys were found.
+            // Both Message= and int keys should not be present in machine at the same time
+            if (oldIntKeys.Count > 0)
+                newKeyArray.Add("Message=" + string.Join(";", oldIntKeys.ToArray()));
 
             var converted = newKeyArray.ToArray();
             base.DeSerialize(new XStringArray(strArr.Key, converted));

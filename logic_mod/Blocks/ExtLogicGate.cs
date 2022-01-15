@@ -174,7 +174,10 @@ namespace Logic.Blocks
                     break;
                 case GateType.Counter:
                     if (pressedB)
+                    {
                         counter = 0;
+                        lastCount = 0;
+                    }
                     if (pressedA)
                     {
                         lastCount = counter;
