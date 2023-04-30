@@ -38,7 +38,11 @@ namespace Logic.BlockScripts
             var forward = machineHandler.ReadValue(cogMotor.ForwardKey);
             var backward = machineHandler.ReadValue(cogMotor.BackwardKey);
             if (forward != backward)
-                cogMotor.SpeedSlider.Value = Mathf.Lerp(0, savedSpeed, Math.Abs(forward - backward));
+            {
+                var diff = forward - backward;
+                var direction = diff >= 0 ? 1 : -1;
+                cogMotor.SpeedSlider.Value = Mathf.Lerp(0, savedSpeed * direction, Math.Abs(diff));
+            }
         }
     }
 }
