@@ -41,7 +41,12 @@ namespace Logic.BlockScripts
             {
                 var diff = forward - backward;
                 var direction = diff >= 0 ? 1 : -1;
-                cogMotor.SpeedSlider.Value = Mathf.Lerp(0, savedSpeed * direction, Math.Abs(diff));
+                // apply sign switch from game to prevent it resetting our negatives
+                var targetMax = savedSpeed * direction;
+                if (cogMotor.Input < 0)
+                    targetMax /= cogMotor.Input;
+
+                cogMotor.SpeedSlider.Value = Mathf.Lerp(0, targetMax, Math.Abs(diff));
             }
         }
     }
